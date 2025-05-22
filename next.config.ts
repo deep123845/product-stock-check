@@ -1,12 +1,14 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === "development";
+
 const nextConfig: NextConfig = {
-  output: 'export',
+  output: "export",
   images: {
     unoptimized: true
   },
-  basePath: '/product-stock-check',
-  assetPrefix: '/product-stock-check/',
+  basePath: isDev ? "" : "/product-stock-check",
+  assetPrefix: isDev ? "" : "/product-stock-check/",
 };
 
 export default nextConfig;
