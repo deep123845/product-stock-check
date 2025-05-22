@@ -1,8 +1,11 @@
 "use client";
 import React, { useState } from "react";
 
-const FileUploadParser: React.FC = () => {
-    const [fileContent, setFileContent] = useState<string | null>(null);
+interface FileUploadParserProps {
+    onFileContentChange?: (parsedLines: string[]) => void;
+}
+
+const FileUploadParser: React.FC<FileUploadParserProps> = ({ onFileContentChange }) => {
     const [fileName, setFileName] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -17,19 +20,30 @@ const FileUploadParser: React.FC = () => {
 
             reader.onload = (e) => {
                 if (e.target && typeof e.target.result === "string") {
-                    setFileContent(e.target.result);
+                    const content = e.target.result;
+
+                    if (onFileContentChange) {
+                        onFileContentChange(parseContent(content));
+                    }
                 }
             };
 
             reader.onerror = () => {
                 setError("Failed to read file.");
+
+                if (onFileContentChange) {
+                    onFileContentChange([]);
+                }
             };
 
             reader.readAsText(file);
         } else {
-            setFileContent(null);
             setFileName(null);
             setError("No file selected.");
+
+            if (onFileContentChange) {
+                onFileContentChange([]);
+            }
         }
     };
 
