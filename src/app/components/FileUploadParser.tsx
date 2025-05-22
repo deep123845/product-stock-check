@@ -34,7 +34,7 @@ const FileUploadParser: React.FC = () => {
     };
 
     const parseContent = (content: string) => {
-        return content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        return content.split('\n').filter(line => line.length > 0);
     };
 
     return (
