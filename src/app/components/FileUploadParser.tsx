@@ -49,17 +49,6 @@ const FileUploadParser: React.FC = () => {
 
             {error && <div className="text-red-500 mb-2">Error: {error}</div>}
             {fileName && <p className="mb-2">Selected file: <span className="font-semibold">{fileName}</span></p>}
-
-            {fileContent && (
-                <div>
-                    <h3 className="text-lg font-semibold mb-2">Parsed Content:</h3>
-                    <ul>
-                        {parseContent(fileContent).map((line, index) => (
-                            <li key={index}>{line}</li>
-                        ))}
-                    </ul>
-                </div>
-            )}
         </div>
     );
 };
