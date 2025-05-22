@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 const FileUploadParser: React.FC = () => {
     const [fileContent, setFileContent] = useState<string | null>(null);
@@ -16,7 +16,7 @@ const FileUploadParser: React.FC = () => {
             const reader = new FileReader();
 
             reader.onload = (e) => {
-                if (e.target && typeof e.target.result === 'string') {
+                if (e.target && typeof e.target.result === "string") {
                     setFileContent(e.target.result);
                 }
             };
@@ -34,7 +34,7 @@ const FileUploadParser: React.FC = () => {
     };
 
     const parseContent = (content: string) => {
-        return content.split('\n').filter(line => line.length > 0);
+        return content.split("\n").filter(line => line.length > 0);
     };
 
     return (
