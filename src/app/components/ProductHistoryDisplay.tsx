@@ -56,8 +56,8 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                 const monthIndex = monthIndexes[j];
                 const salesValue = sales[monthIndex] || 0;
 
-                if (firstMonth[history.productNo] > monthIndex) {
-                    continue; // Skip months before the first month of sales
+                if (firstMonth[history.productNo] >= monthIndex) {
+                    continue; // Skip first month and any months before it
                 }
 
                 // If the month is the last month, add the fraction of the month that has passed
