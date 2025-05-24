@@ -84,7 +84,7 @@ export default function Home() {
       for (let j = 4; j < parts.length; j++) {
         if (isMonth(parts[j])) {
           // Find the month index by looking through the months dictionary values
-          const monthEntry = Object.entries(months).find(([_, value]) => value === parts[j]);
+          const monthEntry = Object.entries(months).find(entry => entry[1] === parts[j]);
           if (monthEntry) {
             const monthIndex = parseInt(monthEntry[0]);
             sales[monthIndex] = 0;
