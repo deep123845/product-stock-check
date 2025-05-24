@@ -1,14 +1,7 @@
 "use client";
 import FileUploadParser from "./components/FileUploadParser";
 import { useState } from "react";
-
-interface ProductHistory {
-  productNo: string;
-  supplier: string;
-  description: string;
-  stock: Number;
-  sales: { [id: number]: Number };
-}
+import ProductHistoryDisplay, { ProductHistory } from "./components/ProductHistoryDisplay";
 
 export default function Home() {
 
@@ -75,8 +68,8 @@ export default function Home() {
       const productNo = parts[0];
       const supplier = parts[1];
       const description = parts[2];
-      const stock = Number(parts[3]);
-      const sales: { [id: number]: Number } = {};
+      const stock = parseInt(parts[3]);
+      const sales: { [id: number]: number } = {};
       const activeMonths = [];
 
       // Populate months for sales
@@ -93,7 +86,7 @@ export default function Home() {
 
       // Populate sales data for active months
       for (let j = 0; j < activeMonths.length; j++) {
-        sales[activeMonths[j]] = Number(parts[salesIndex + j]);
+        sales[activeMonths[j]] = parseInt(parts[salesIndex + j]);
       }
 
       history.push({ productNo, supplier, description, stock, sales });
@@ -110,12 +103,7 @@ export default function Home() {
       <h1 className="text-3xl font-bold text-center mt-8">Product Stock Check</h1>
       <p className="text-center mt-4">Upload a text file to check product stock.</p>
       <FileUploadParser onFileContentChange={handleFileContentChange} />
-      <div className="p-4 border rounded shadow mt-8">
-        <h2 className="text-xl font-bold mb-2">Processed Lines:</h2>
-        <div className="overflow-x-auto">
-          <pre className="whitespace-pre" style={{ tabSize: 32 }}>{processedLines.join("\n")}</pre>
-        </div>
-      </div>
+      <ProductHistoryDisplay productHistory={productHistory} months={months} />
     </div>
   );
 }
