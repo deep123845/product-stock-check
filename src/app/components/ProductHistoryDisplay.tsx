@@ -104,6 +104,23 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const averageMonthlySales = getAverageMonthlySales();
 
+    const getRestockAmounts = () => {
+        const restockAmounts: { [productNo: string]: number } = {};
+
+        for (let i = 0; i < productHistory.length; i++) {
+            const history = productHistory[i];
+            const productNo = history.productNo;
+            const stock = history.stock || 0;
+            const averageSales = averageMonthlySales[productNo] || 0;
+
+            restockAmounts[productNo] = Math.max(0, averageSales - stock);
+        }
+
+        return restockAmounts;
+    }
+
+    const restockAmounts = getRestockAmounts();
+
     const handleAverageMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         setMonthsforAverage(value ? parseInt(value) : 0);
@@ -156,7 +173,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                             <td className="border border-gray-300 p-2">{history.description}</td>
                             <td className="border border-gray-300 p-2">{history.stock}</td>
                             <td className="border border-gray-300 p-2">{averageMonthlySales[history.productNo].toFixed(2) || 0}</td>
-                            <td className="border border-gray-300 p-2">{((averageMonthlySales[history.productNo] || 0) - (history.stock || 0)) > 0 ? (((averageMonthlySales[history.productNo] || 0) - (history.stock || 0)).toFixed(2)) : 0}</td>
+                            <td className="border border-gray-300 p-2">{restockAmounts[history.productNo].toFixed(2)}</td>
                             {monthIndexes.map((monthIndex) => (
                                 <td
                                     key={monthIndex}
