@@ -73,7 +73,6 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
             averageSales[history.productNo] = totalSales / monthsCount;
         }
 
-        console.log("Average Sales:", averageSales);
         return averageSales;
     }
 
