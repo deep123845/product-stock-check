@@ -96,6 +96,11 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                 }
             }
 
+            if (monthsCount === 0) {
+                averageSales[productNo] = 0;
+                continue;
+            }
+
             averageSales[history.productNo] = totalSales / monthsCount;
         }
 
@@ -111,7 +116,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
             const history = productHistory[i];
             const productNo = history.productNo;
             const stock = history.stock || 0;
-            const averageSales = averageMonthlySales[productNo] || 0;
+            const averageSales = averageMonthlySales[productNo];
 
             restockAmounts[productNo] = Math.max(0, averageSales - stock);
         }
@@ -172,7 +177,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                             <td className="border border-gray-300 p-2">{history.productNo}</td>
                             <td className="border border-gray-300 p-2">{history.description}</td>
                             <td className="border border-gray-300 p-2">{history.stock}</td>
-                            <td className="border border-gray-300 p-2">{averageMonthlySales[history.productNo].toFixed(2) || 0}</td>
+                            <td className="border border-gray-300 p-2">{averageMonthlySales[history.productNo].toFixed(2)}</td>
                             <td className="border border-gray-300 p-2">{restockAmounts[history.productNo].toFixed(2)}</td>
                             {monthIndexes.map((monthIndex) => (
                                 <td
