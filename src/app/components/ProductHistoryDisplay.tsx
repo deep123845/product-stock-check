@@ -14,8 +14,11 @@ interface ProductHistoryDisplayProps {
 }
 
 const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHistory, months }) => {
+    // Months ordered from latest to oldest
     const monthIndexes = Object.keys(months).map(Number).sort((a, b) => b - a);
+
     const [monthsforAverage, setMonthsforAverage] = useState<number>(0);
+    const [includeCurrentMonth, setIncludeCurrentMonth] = useState<boolean>(true);
 
     const getfirstMonths = (productHistory: ProductHistory[]) => {
         const firstMonths: { [productNo: string]: number } = {};
@@ -46,7 +49,10 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
             let monthsCount = 0;
             let totalSales = 0;
-            for (let j = 0; j < averageLength; j++) {
+            // Start from the last month if includeCurrentMonth is true otherwise from the second last month
+            const startIndex = includeCurrentMonth ? 0 : 1;
+
+            for (let j = startIndex; j < averageLength; j++) {
                 const monthIndex = monthIndexes[j];
                 const salesValue = sales[monthIndex] || 0;
 
@@ -78,17 +84,33 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         setMonthsforAverage(value ? parseInt(value) : 0);
     }
 
+    const handleIncludeCurrentMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.checked;
+        setIncludeCurrentMonth(value);
+    }
+
     return (
         <div className="overflow-x-auto">
-            <p className="text-l font-bold mt-4">{"Number of Months to average sales over (0 means average over all available data)"}</p>
-            <input
-                type="number"
-                className="border border-gray-300 p-2 mb-4"
-                placeholder="Enter number of months to average"
-                value={monthsforAverage}
-                onChange={handleAverageMonthChange}
-                min="0"
-            />
+            <div className="flex items-center">
+                <input
+                    type="number"
+                    className="border border-gray-300 p-2 w-1/8 mr-2"
+                    placeholder="Enter number of months to average"
+                    value={monthsforAverage}
+                    onChange={handleAverageMonthChange}
+                    min="0"
+                />
+                <p className="text-l font-bold">{"Number of Months to average sales over (0 means average over all available data)"}</p>
+            </div>
+            <div className="flex items-center">
+                <input
+                    type="checkbox"
+                    className="border border-gray-300 p-2 mr-2"
+                    checked={includeCurrentMonth}
+                    onChange={handleIncludeCurrentMonthChange}
+                />
+                <p className="text-l font-bold">{"Include current month (current month is usually partial)"}</p>
+            </div>
             <table className="min-w-full border-collapse border border-gray-300">
                 <thead>
                     <tr>
