@@ -8,10 +8,12 @@ export interface ProductHistory {
 
 interface ProductHistoryDisplayProps {
     productHistory: ProductHistory[];
-    months: string[];
+    months: { [id: number]: string };
 }
 
 const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHistory, months }) => {
+    const monthIndexes = Object.keys(months).map(Number).sort((a, b) => b - a);
+
     return (
         <div className="overflow-x-auto">
             <table className="min-w-full border-collapse border border-gray-300">
@@ -20,8 +22,8 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                         <th className="border border-gray-300 p-2">Product No</th>
                         <th className="border border-gray-300 p-2">Description</th>
                         <th className="border border-gray-300 p-2">Stock</th>
-                        {months.map((month, index) => (
-                            <th key={index} className="border border-gray-300 p-2">{month}</th>
+                        {monthIndexes.map((index) => (
+                            <th key={index} className="border border-gray-300 p-2">{months[index]}</th>
                         ))}
                     </tr>
                 </thead>
@@ -31,7 +33,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                             <td className="border border-gray-300 p-2">{history.productNo}</td>
                             <td className="border border-gray-300 p-2">{history.description}</td>
                             <td className="border border-gray-300 p-2">{history.stock}</td>
-                            {months.map((month, monthIndex) => (
+                            {monthIndexes.map((monthIndex) => (
                                 <td key={monthIndex} className="border border-gray-300 p-2">
                                     {history.sales[monthIndex] || 0}
                                 </td>

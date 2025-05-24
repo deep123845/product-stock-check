@@ -34,20 +34,20 @@ export default function Home() {
   }
 
   const getMonths = () => {
-    const months = new Set<string>();
+    const monthsSet = new Set<string>();
 
     // Extract all unique months from the processed lines
     for (let i = 0; i < parsedLines.length; i++) {
       const parts = parsedLines[i].split("\t");
       for (let j = 0; j < parts.length; j++) {
         if (isMonth(parts[j])) {
-          months.add(parts[j]);
+          monthsSet.add(parts[j]);
         }
       }
     }
 
     // Sort months in ascending order
-    return Array.from(months).sort((a, b) => {
+    const sortedMonths = Array.from(monthsSet).sort((a, b) => {
       const [monthA, yearA] = a.split("-").map(Number);
       const [monthB, yearB] = b.split("-").map(Number);
 
@@ -56,6 +56,14 @@ export default function Home() {
       }
       return yearA - yearB;
     });
+
+    // Create dictionary with index as key and month as value
+    const monthsDict: { [id: number]: string } = {};
+    sortedMonths.forEach((month, index) => {
+      monthsDict[index] = month;
+    });
+
+    return monthsDict;
   }
 
   const months = getMonths();
@@ -75,9 +83,13 @@ export default function Home() {
       // Populate months for sales
       for (let j = 4; j < parts.length; j++) {
         if (isMonth(parts[j])) {
-          const monthIndex = months.findIndex((month) => month === parts[j]);
-          sales[monthIndex] = 0;
-          activeMonths.push(monthIndex);
+          // Find the month index by looking through the months dictionary values
+          const monthEntry = Object.entries(months).find(([_, value]) => value === parts[j]);
+          if (monthEntry) {
+            const monthIndex = parseInt(monthEntry[0]);
+            sales[monthIndex] = 0;
+            activeMonths.push(monthIndex);
+          }
         }
       }
 
