@@ -71,27 +71,20 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const includedMonths = getIncludedMonths();
 
-    const getAverageMonthlySales = (productHistory: ProductHistory[], numMonth?: number) => {
+    const getAverageMonthlySales = () => {
         const averageSales: { [productNo: string]: number } = {};
 
         for (let i = 0; i < productHistory.length; i++) {
             const history = productHistory[i];
+            const productNo = history.productNo;
             const sales = history.sales;
 
             let monthsCount = 0;
             let totalSales = 0;
-            // Start from the last month if includeCurrentMonth is true otherwise from the second last month
-            const startIndex = includeCurrentMonth ? 0 : 1;
-            const averageLength = numMonth || monthIndexes.length;
-            const endIndex = Math.min(startIndex + averageLength, monthIndexes.length);
 
-            for (let j = startIndex; j < endIndex; j++) {
-                const monthIndex = monthIndexes[j];
+            for (let j = 0; j < includedMonths[productNo].length; j++) {
+                const monthIndex = includedMonths[productNo][j];
                 const salesValue = sales[monthIndex] || 0;
-
-                if (firstMonth[history.productNo] >= monthIndex) {
-                    continue; // Skip first month and any months before it
-                }
 
                 // If the month is the last month, add the fraction of the month that has passed
                 if (monthIndex === Math.max(...monthIndexes)) {
@@ -109,7 +102,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         return averageSales;
     }
 
-    const averageMonthlySales = getAverageMonthlySales(productHistory, monthsforAverage);
+    const averageMonthlySales = getAverageMonthlySales();
 
     const handleAverageMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
