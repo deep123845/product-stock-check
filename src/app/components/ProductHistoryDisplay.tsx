@@ -39,6 +39,38 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     // get the fraction of the last month that has passed (days elsapsed/ days in month)
     const getLastMonthFraction = new Date().getDate() / new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
 
+    const getIncludedMonths = () => {
+        const includedMonths: { [productNo: string]: number[] } = {};
+
+        for (let i = 0; i < productHistory.length; i++) {
+            const history = productHistory[i];
+
+            includedMonths[history.productNo] = [];
+
+            for (let j = 0; j < monthIndexes.length; j++) {
+                const monthIndex = monthIndexes[j];
+
+                if (firstMonth[history.productNo] >= monthIndex) {
+                    continue; // Skip first month and any months before it
+                }
+
+                if (!includeCurrentMonth && (Math.max(...monthIndexes) === monthIndex)) {
+                    continue; // Skip the current month if includeCurrentMonth is false
+                }
+
+                if (includedMonths[history.productNo].length >= monthsforAverage && monthsforAverage > 0) {
+                    break; // Stop if we have enough months
+                }
+
+                includedMonths[history.productNo].push(monthIndex);
+            }
+        }
+
+        return includedMonths;
+    }
+
+    const includedMonths = getIncludedMonths();
+
     const getAverageMonthlySales = (productHistory: ProductHistory[], numMonth?: number) => {
         const averageSales: { [productNo: string]: number } = {};
 
@@ -133,7 +165,10 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                             <td className="border border-gray-300 p-2">{averageMonthlySales[history.productNo].toFixed(2) || 0}</td>
                             <td className="border border-gray-300 p-2">{((averageMonthlySales[history.productNo] || 0) - (history.stock || 0)) > 0 ? (((averageMonthlySales[history.productNo] || 0) - (history.stock || 0)).toFixed(2)) : 0}</td>
                             {monthIndexes.map((monthIndex) => (
-                                <td key={monthIndex} className={`border border-gray-300 p-2 ${firstMonth[history.productNo] < monthIndex ? "text-green-500" : "text-red-500"}`}>
+                                <td
+                                    key={monthIndex}
+                                    className={`border border-gray-300 p-2 ${includedMonths[history.productNo].includes(monthIndex) ? "text-green-500" : "text-red-500"}`}
+                                >
                                     {history.sales[monthIndex] || 0}
                                 </td>
                             ))}
