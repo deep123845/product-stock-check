@@ -41,7 +41,6 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const getAverageMonthlySales = (productHistory: ProductHistory[], numMonth?: number) => {
         const averageSales: { [productNo: string]: number } = {};
-        const averageLength = numMonth || monthIndexes.length;
 
         for (let i = 0; i < productHistory.length; i++) {
             const history = productHistory[i];
@@ -51,8 +50,10 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
             let totalSales = 0;
             // Start from the last month if includeCurrentMonth is true otherwise from the second last month
             const startIndex = includeCurrentMonth ? 0 : 1;
+            const averageLength = numMonth || monthIndexes.length;
+            const endIndex = Math.min(startIndex + averageLength, monthIndexes.length);
 
-            for (let j = startIndex; j < averageLength; j++) {
+            for (let j = startIndex; j < endIndex; j++) {
                 const monthIndex = monthIndexes[j];
                 const salesValue = sales[monthIndex] || 0;
 
