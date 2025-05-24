@@ -86,12 +86,12 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                 const monthIndex = includedMonths[productNo][j];
                 const salesValue = sales[monthIndex] || 0;
 
+                totalSales += salesValue;
+
                 // If the month is the last month, add the fraction of the month that has passed
                 if (monthIndex === Math.max(...monthIndexes)) {
-                    totalSales += salesValue;
                     monthsCount += getLastMonthFraction;
                 } else {
-                    totalSales += salesValue;
                     monthsCount++;
                 }
             }
