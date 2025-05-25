@@ -163,7 +163,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         for (let i = 0; i < maxPacks; i++) {
             const maxRestockProductNo = Object.keys(restockAmountsCopy).reduce((a, b) => restockAmountsCopy[a] > restockAmountsCopy[b] ? a : b);
             if (restockAmountsCopy[maxRestockProductNo] <= 0.5) {
-                console.log(i + 1);
+                console.log(i);
                 break; // No more products to restock
             }
 
