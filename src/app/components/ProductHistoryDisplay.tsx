@@ -19,6 +19,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const [monthsforAverage, setMonthsforAverage] = useState<number>(0);
     const [includeCurrentMonth, setIncludeCurrentMonth] = useState<boolean>(true);
+    const [currentDay, setCurrentDay] = useState<number>(new Date().getDate());
 
     const getfirstMonths = (productHistory: ProductHistory[]) => {
         const firstMonths: { [productNo: string]: number } = {};
@@ -37,7 +38,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const firstMonth = getfirstMonths(productHistory);
 
     // get the fraction of the last month that has passed (days elsapsed/ days in month)
-    const getLastMonthFraction = new Date().getDate() / new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+    const getLastMonthFraction = currentDay / new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
 
     const getIncludedMonths = () => {
         const includedMonths: { [productNo: string]: number[] } = {};
@@ -136,6 +137,11 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         setIncludeCurrentMonth(value);
     }
 
+    const handleCurrentDayChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value;
+        setCurrentDay(value ? parseInt(value) : 0);
+    }
+
     return (
         <div className="overflow-x-auto">
             <div className="flex items-center">
@@ -157,6 +163,18 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                     onChange={handleIncludeCurrentMonthChange}
                 />
                 <p className="text-l font-bold">{"Include current month (current month is usually partial)"}</p>
+            </div>
+            <div className="flex items-center">
+                <input
+                    type="number"
+                    className="border border-gray-300 p-2 w-1/8 mr-2"
+                    placeholder="Enter day of month of report"
+                    value={currentDay}
+                    onChange={handleCurrentDayChange}
+                    min="1"
+                    max="31"
+                />
+                <p className="text-l font-bold">{"Day of month at time of report"}</p>
             </div>
             <table className="min-w-full border-collapse border border-gray-300">
                 <thead>
