@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 export interface ProductHistory {
     productNo: string;
     supplier: string;
@@ -21,6 +21,14 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const [includeCurrentMonth, setIncludeCurrentMonth] = useState<boolean>(true);
     const [currentDay, setCurrentDay] = useState<number>(new Date().getDate());
     const [weeksToRestock, setWeeksToRestock] = useState<number>(4);
+    const [unitsPerPack, setUnitsPerPack] = useState<{ [productNo: string]: number }>({});
+
+    useEffect(() => {
+        const storedUnitsPerPack = localStorage.getItem("unitsPerPack");
+        if (storedUnitsPerPack) {
+            setUnitsPerPack(JSON.parse(storedUnitsPerPack));
+        }
+    }, []);
 
     const getfirstMonths = (productHistory: ProductHistory[]) => {
         const firstMonths: { [productNo: string]: number } = {};
@@ -123,7 +131,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
             const weeksInMonth = 4;
             const weeklyRestockAmount = Math.max(0, averageSales - stock) / weeksInMonth;
 
-            restockAmounts[productNo] = weeklyRestockAmount * weeksToRestock;
+            restockAmounts[productNo] = weeklyRestockAmount * weeksToRestock / (unitsPerPack[productNo] || 1);
         }
 
         return restockAmounts;
@@ -149,6 +157,13 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const handleWeeksToRestockChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         setWeeksToRestock(value ? parseInt(value) : 0);
+    }
+
+    const handleUnitsPerPackChange = (event: React.ChangeEvent<HTMLInputElement>, productNo: string) => {
+        const value = event.target.value;
+        const newUnitsPerPack = { ...unitsPerPack, [productNo]: value ? parseInt(value) : 0 };
+        setUnitsPerPack(newUnitsPerPack);
+        localStorage.setItem("unitsPerPack", JSON.stringify(newUnitsPerPack));
     }
 
     return (
@@ -200,10 +215,11 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                 <thead>
                     <tr>
                         <th className="border border-gray-300 p-2">Product No</th>
+                        <th className="border border-gray-300 p-2">Units per Pack</th>
                         <th className="border border-gray-300 p-2">Description</th>
                         <th className="border border-gray-300 p-2">Stock</th>
                         <th className="border border-gray-300 p-2">Avg Monthly Sales</th>
-                        <th className="border border-gray-300 p-2">Restock</th>
+                        <th className="border border-gray-300 p-2">{`Restock (Packs)`}</th>
                         {monthIndexes.map((index) => (
                             <th key={index} className="border border-gray-300 p-2">{months[index]}</th>
                         ))}
@@ -213,6 +229,15 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                     {productHistory.map((history, index) => (
                         <tr key={index} className={index % 2 === 0 ? "bg-black" : "bg-gray-800"}>
                             <td className="border border-gray-300 p-2">{history.productNo}</td>
+                            <td className="border border-gray-300 p-2">
+                                <input
+                                    type="number"
+                                    className="border border-gray-300 p-2 w-[100%]"
+                                    value={unitsPerPack[history.productNo] || ""}
+                                    onChange={(event) => handleUnitsPerPackChange(event, history.productNo)}
+                                    min="0"
+                                />
+                            </td>
                             <td className="border border-gray-300 p-2">{history.description}</td>
                             <td className="border border-gray-300 p-2">{history.stock}</td>
                             <td className="border border-gray-300 p-2">{averageMonthlySales[history.productNo].toFixed(2)}</td>
