@@ -139,6 +139,36 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const restockAmounts = getRestockAmounts();
 
+    const generatePriorityRestockList = () => {
+        const maxPacks = 45;
+        const restockAmountsCopy = { ...restockAmounts };
+        const restockList: { [productNo: string]: number } = {};
+
+        for (let i = 0; i < maxPacks; i++) {
+            const maxRestockProductNo = Object.keys(restockAmountsCopy).reduce((a, b) => restockAmountsCopy[a] > restockAmountsCopy[b] ? a : b);
+            if (restockAmountsCopy[maxRestockProductNo] <= 0.5) {
+                console.log(i + 1);
+                break; // No more products to restock
+            }
+
+            if (!restockList[maxRestockProductNo]) {
+                restockList[maxRestockProductNo] = 0;
+            }
+
+            restockList[maxRestockProductNo] += 1;
+            restockAmountsCopy[maxRestockProductNo] -= 1;
+        }
+
+        for (let i = 0; i < Object.keys(restockList).length; i++) {
+            const productNo = Object.keys(restockList)[i];
+            console.log(`Product No: ${productNo}, Description: ${productHistory.find(history => history.productNo === productNo)?.description}, Restock Amount: ${restockList[productNo]}`);
+        }
+        return restockList;
+    }
+
+    const restockList = generatePriorityRestockList();
+
+
     const handleAverageMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         setMonthsforAverage(value ? parseInt(value) : 0);
