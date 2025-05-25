@@ -20,6 +20,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const [monthsforAverage, setMonthsforAverage] = useState<number>(0);
     const [includeCurrentMonth, setIncludeCurrentMonth] = useState<boolean>(true);
     const [currentDay, setCurrentDay] = useState<number>(new Date().getDate());
+    const [weeksToRestock, setWeeksToRestock] = useState<number>(4);
 
     const getfirstMonths = (productHistory: ProductHistory[]) => {
         const firstMonths: { [productNo: string]: number } = {};
@@ -119,7 +120,10 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
             const stock = history.stock || 0;
             const averageSales = averageMonthlySales[productNo];
 
-            restockAmounts[productNo] = Math.max(0, averageSales - stock);
+            const weeksInMonth = 4;
+            const weeklyRestockAmount = Math.max(0, averageSales - stock) / weeksInMonth;
+
+            restockAmounts[productNo] = weeklyRestockAmount * weeksToRestock;
         }
 
         return restockAmounts;
@@ -140,6 +144,11 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const handleCurrentDayChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         setCurrentDay(value ? parseInt(value) : 0);
+    }
+
+    const handleWeeksToRestockChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value;
+        setWeeksToRestock(value ? parseInt(value) : 0);
     }
 
     return (
@@ -175,6 +184,17 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                     max="31"
                 />
                 <p className="text-l font-bold">{"Day of month at time of report"}</p>
+            </div>
+            <div className="flex items-center">
+                <input
+                    type="number"
+                    className="border border-gray-300 p-2 w-1/8 mr-2"
+                    placeholder="Enter number of weeks to restock"
+                    value={weeksToRestock}
+                    onChange={handleWeeksToRestockChange}
+                    min="1"
+                />
+                <p className="text-l font-bold">{"Weeks to restock"}</p>
             </div>
             <table className="min-w-full border-collapse border border-gray-300">
                 <thead>
