@@ -31,6 +31,9 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     }, []);
 
     const getfirstMonths = (productHistory: ProductHistory[]) => {
+        if (!productHistory || productHistory.length === 0) {
+            return {};
+        }
         const firstMonths: { [productNo: string]: number } = {};
 
         for (let i = 0; i < productHistory.length; i++) {
@@ -50,6 +53,9 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const getLastMonthFraction = currentDay / new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
 
     const getIncludedMonths = () => {
+        if (!productHistory || productHistory.length === 0) {
+            return {};
+        }
         const includedMonths: { [productNo: string]: number[] } = {};
 
         for (let i = 0; i < productHistory.length; i++) {
@@ -82,6 +88,9 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const includedMonths = getIncludedMonths();
 
     const getAverageMonthlySales = () => {
+        if (!productHistory || productHistory.length === 0) {
+            return {};
+        }
         const averageSales: { [productNo: string]: number } = {};
 
         for (let i = 0; i < productHistory.length; i++) {
@@ -120,6 +129,9 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const averageMonthlySales = getAverageMonthlySales();
 
     const getRestockAmounts = () => {
+        if (!productHistory || productHistory.length === 0) {
+            return {};
+        }
         const restockAmounts: { [productNo: string]: number } = {};
 
         for (let i = 0; i < productHistory.length; i++) {
@@ -141,6 +153,9 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const restockAmounts = getRestockAmounts();
 
     const generatePriorityRestockList = () => {
+        if (!productHistory || productHistory.length === 0) {
+            return {};
+        }
         const maxPacks = 45;
         const restockAmountsCopy = { ...restockAmounts };
         const restockList: { [productNo: string]: number } = {};
