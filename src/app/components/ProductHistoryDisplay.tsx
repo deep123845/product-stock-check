@@ -127,11 +127,12 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
             const productNo = history.productNo;
             const stock = history.stock || 0;
             const averageSales = averageMonthlySales[productNo];
+            const unitsPerPackValue = unitsPerPack[productNo] || 1;
 
             const weeksInMonth = 4;
-            const weeklyRestockAmount = Math.max(0, averageSales - stock) / weeksInMonth;
-
-            restockAmounts[productNo] = weeklyRestockAmount * weeksToRestock / (unitsPerPack[productNo] || 1);
+            const monthsRestock = weeksToRestock / weeksInMonth;
+            const restockUnits = Math.max(0, ((averageSales * monthsRestock) - stock));
+            restockAmounts[productNo] = restockUnits / unitsPerPackValue;
         }
 
         return restockAmounts;
