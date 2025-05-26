@@ -22,6 +22,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const [currentDay, setCurrentDay] = useState<number>(new Date().getDate());
     const [weeksToRestock, setWeeksToRestock] = useState<number>(4);
     const [unitsPerPack, setUnitsPerPack] = useState<{ [productNo: string]: number }>({});
+    const [productDisabled, setProductDisabled] = useState<{ [productNo: string]: boolean }>({});
     const [maxPacks, setMaxPacks] = useState<number>(45);
     const [tableVisible, setTableVisible] = useState<boolean>(true);
 
@@ -29,6 +30,10 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         const storedUnitsPerPack = localStorage.getItem("unitsPerPack");
         if (storedUnitsPerPack) {
             setUnitsPerPack(JSON.parse(storedUnitsPerPack));
+        }
+        const storedProductDisabled = localStorage.getItem("productDisabled");
+        if (storedProductDisabled) {
+            setProductDisabled(JSON.parse(storedProductDisabled));
         }
     }, []);
 
@@ -160,6 +165,13 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         }
 
         const restockAmountsCopy = { ...restockAmounts };
+        // Filter out products that are disabled
+        Object.keys(productDisabled).forEach(productNo => {
+            if (productDisabled[productNo]) {
+                delete restockAmountsCopy[productNo];
+            }
+        });
+
         const restockList: { [productNo: string]: number } = {};
         let restockTotal = 0;
 
@@ -209,6 +221,12 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         const newUnitsPerPack = { ...unitsPerPack, [productNo]: value ? parseInt(value) : 0 };
         setUnitsPerPack(newUnitsPerPack);
         localStorage.setItem("unitsPerPack", JSON.stringify(newUnitsPerPack));
+    }
+
+    const handleProductDisabledChange = (productNo: string) => {
+        const newProductDisabled = { ...productDisabled, [productNo]: !productDisabled[productNo] };
+        setProductDisabled(newProductDisabled);
+        localStorage.setItem("productDisabled", JSON.stringify(newProductDisabled));
     }
 
     const handleMaxPacksChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -289,6 +307,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                     <thead>
                         <tr>
                             <th className="border border-gray-300 p-2">Product No</th>
+                            <th className="border border-gray-300 p-2">Disable</th>
                             <th className="border border-gray-300 p-2">Units per Pack</th>
                             <th className="border border-gray-300 p-2">Description</th>
                             <th className="border border-gray-300 p-2">Stock</th>
@@ -303,6 +322,14 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                         {productHistory.map((history, index) => (
                             <tr key={index} className={index % 2 === 0 ? "bg-black" : "bg-gray-800"}>
                                 <td className="border border-gray-300 p-2">{history.productNo}</td>
+                                <td className="border border-gray-300 p-2">
+                                    <input
+                                        type="checkbox"
+                                        className="border border-gray-300 p-2"
+                                        checked={productDisabled[history.productNo] || false}
+                                        onChange={() => handleProductDisabledChange(history.productNo)}
+                                    />
+                                </td>
                                 <td className="border border-gray-300 p-2">
                                     <input
                                         type="number"
