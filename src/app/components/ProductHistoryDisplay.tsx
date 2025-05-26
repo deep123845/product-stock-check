@@ -158,7 +158,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         if (!productHistory || productHistory.length === 0) {
             return { restockList: {}, restockTotal: 0 };
         }
-        const maxPacks = 45;
+
         const restockAmountsCopy = { ...restockAmounts };
         const restockList: { [productNo: string]: number } = {};
         let restockTotal = 0;
