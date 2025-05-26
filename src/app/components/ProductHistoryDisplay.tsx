@@ -22,6 +22,8 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const [currentDay, setCurrentDay] = useState<number>(new Date().getDate());
     const [weeksToRestock, setWeeksToRestock] = useState<number>(4);
     const [unitsPerPack, setUnitsPerPack] = useState<{ [productNo: string]: number }>({});
+    const [maxPacks, setMaxPacks] = useState<number>(45);
+    const [tableVisible, setTableVisible] = useState<boolean>(true);
 
     useEffect(() => {
         const storedUnitsPerPack = localStorage.getItem("unitsPerPack");
@@ -152,18 +154,18 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const restockAmounts = getRestockAmounts();
 
-    const generatePriorityRestockList = () => {
+    const generatePriorityRestockList = (): { restockList: { [productNo: string]: number }, restockTotal: number } => {
         if (!productHistory || productHistory.length === 0) {
-            return {};
+            return { restockList: {}, restockTotal: 0 };
         }
         const maxPacks = 45;
         const restockAmountsCopy = { ...restockAmounts };
         const restockList: { [productNo: string]: number } = {};
+        let restockTotal = 0;
 
         for (let i = 0; i < maxPacks; i++) {
             const maxRestockProductNo = Object.keys(restockAmountsCopy).reduce((a, b) => restockAmountsCopy[a] > restockAmountsCopy[b] ? a : b);
             if (restockAmountsCopy[maxRestockProductNo] <= 0.5) {
-                console.log(i);
                 break; // No more products to restock
             }
 
@@ -173,16 +175,13 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
             restockList[maxRestockProductNo] += 1;
             restockAmountsCopy[maxRestockProductNo] -= 1;
+            restockTotal += 1;
         }
-
-        for (let i = 0; i < Object.keys(restockList).length; i++) {
-            const productNo = Object.keys(restockList)[i];
-            console.log(`Product No: ${productNo}, Description: ${productHistory.find(history => history.productNo === productNo)?.description}, Restock Amount: ${restockList[productNo]}`);
-        }
-        return restockList;
+        const output = { restockList, restockTotal };
+        return output;
     }
 
-    const restockList = generatePriorityRestockList();
+    const { restockList, restockTotal } = generatePriorityRestockList();
 
 
     const handleAverageMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -210,6 +209,15 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         const newUnitsPerPack = { ...unitsPerPack, [productNo]: value ? parseInt(value) : 0 };
         setUnitsPerPack(newUnitsPerPack);
         localStorage.setItem("unitsPerPack", JSON.stringify(newUnitsPerPack));
+    }
+
+    const handleMaxPacksChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value;
+        setMaxPacks(value ? parseInt(value) : 45);
+    }
+
+    const handleTableVisible = () => {
+        setTableVisible(!tableVisible);
     }
 
     return (
@@ -257,49 +265,93 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                 />
                 <p className="text-l font-bold">{"Weeks to restock"}</p>
             </div>
-            <table className="min-w-full border-collapse border border-gray-300">
-                <thead>
-                    <tr>
-                        <th className="border border-gray-300 p-2">Product No</th>
-                        <th className="border border-gray-300 p-2">Units per Pack</th>
-                        <th className="border border-gray-300 p-2">Description</th>
-                        <th className="border border-gray-300 p-2">Stock</th>
-                        <th className="border border-gray-300 p-2">Avg Monthly Sales</th>
-                        <th className="border border-gray-300 p-2">{`Restock (Packs)`}</th>
-                        {monthIndexes.map((index) => (
-                            <th key={index} className="border border-gray-300 p-2">{months[index]}</th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {productHistory.map((history, index) => (
-                        <tr key={index} className={index % 2 === 0 ? "bg-black" : "bg-gray-800"}>
-                            <td className="border border-gray-300 p-2">{history.productNo}</td>
-                            <td className="border border-gray-300 p-2">
-                                <input
-                                    type="number"
-                                    className="border border-gray-300 p-2 w-[100%]"
-                                    value={unitsPerPack[history.productNo] || ""}
-                                    onChange={(event) => handleUnitsPerPackChange(event, history.productNo)}
-                                    min="0"
-                                />
-                            </td>
-                            <td className="border border-gray-300 p-2">{history.description}</td>
-                            <td className="border border-gray-300 p-2">{history.stock}</td>
-                            <td className="border border-gray-300 p-2">{averageMonthlySales[history.productNo].toFixed(2)}</td>
-                            <td className="border border-gray-300 p-2">{restockAmounts[history.productNo].toFixed(2)}</td>
-                            {monthIndexes.map((monthIndex) => (
-                                <td
-                                    key={monthIndex}
-                                    className={`border border-gray-300 p-2 ${includedMonths[history.productNo].includes(monthIndex) ? "text-green-500" : "text-red-500"}`}
-                                >
-                                    {history.sales[monthIndex] || 0}
-                                </td>
+            <div className="flex items-center">
+                <input
+                    type="number"
+                    className="border border-gray-300 p-2 w-1/8 mr-2"
+                    placeholder="Enter max packs to restock"
+                    value={maxPacks}
+                    onChange={handleMaxPacksChange}
+                    min="1"
+                />
+                <p className="text-l font-bold">{"Max packs to restock"}</p>
+            </div>
+            <div className="flex items-center mb-4">
+                <button
+                    className="bg-gray-500 text-white p-2 rounded mr-2"
+                    onClick={handleTableVisible}
+                >
+                    {tableVisible ? "Hide Table" : "Show Table"}
+                </button>
+            </div>
+            {tableVisible && <div>
+                <table className="min-w-full border-collapse border border-gray-300">
+                    <thead>
+                        <tr>
+                            <th className="border border-gray-300 p-2">Product No</th>
+                            <th className="border border-gray-300 p-2">Units per Pack</th>
+                            <th className="border border-gray-300 p-2">Description</th>
+                            <th className="border border-gray-300 p-2">Stock</th>
+                            <th className="border border-gray-300 p-2">Avg Monthly Sales</th>
+                            <th className="border border-gray-300 p-2">{`Restock (Packs)`}</th>
+                            {monthIndexes.map((index) => (
+                                <th key={index} className="border border-gray-300 p-2">{months[index]}</th>
                             ))}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {productHistory.map((history, index) => (
+                            <tr key={index} className={index % 2 === 0 ? "bg-black" : "bg-gray-800"}>
+                                <td className="border border-gray-300 p-2">{history.productNo}</td>
+                                <td className="border border-gray-300 p-2">
+                                    <input
+                                        type="number"
+                                        className="border border-gray-300 p-2 w-[100%]"
+                                        value={unitsPerPack[history.productNo] || ""}
+                                        onChange={(event) => handleUnitsPerPackChange(event, history.productNo)}
+                                        min="0"
+                                    />
+                                </td>
+                                <td className="border border-gray-300 p-2">{history.description}</td>
+                                <td className="border border-gray-300 p-2">{history.stock}</td>
+                                <td className="border border-gray-300 p-2">{averageMonthlySales[history.productNo].toFixed(2)}</td>
+                                <td className="border border-gray-300 p-2">{restockAmounts[history.productNo].toFixed(2)}</td>
+                                {monthIndexes.map((monthIndex) => (
+                                    <td
+                                        key={monthIndex}
+                                        className={`border border-gray-300 p-2 ${includedMonths[history.productNo].includes(monthIndex) ? "text-green-500" : "text-red-500"}`}
+                                    >
+                                        {history.sales[monthIndex] || 0}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>}
+            <div className="mt-4">
+                <h2 className="text-xl font-bold mb-2">Restock List: {restockTotal}</h2>
+                <table className="min-w-full border-collapse border border-gray-300">
+                    <thead>
+                        <tr>
+                            <th className="border border-gray-300 p-2">Product No</th>
+                            <th className="border border-gray-300 p-2">Description</th>
+                            <th className="border border-gray-300 p-2">Restock Amount (Packs)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {Object.keys(restockList).map((productNo, index) => (
+                            <tr key={index} className={index % 2 === 0 ? "bg-black" : "bg-gray-800"}>
+                                <td className="border border-gray-300 p-2">{productNo}</td>
+                                <td className="border border-gray-300 p-2">
+                                    {productHistory.find(history => history.productNo === productNo)?.description || "N/A"}
+                                </td>
+                                <td className="border border-gray-300 p-2">{restockList[productNo]}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }
