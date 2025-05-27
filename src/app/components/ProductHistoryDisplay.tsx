@@ -170,7 +170,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         let restockTotal = 0;
 
         for (let j = 1; j <= weeksToRestock; j++) {
-            let restockAmountsCopy = getRestockAmounts(j);
+            const restockAmountsCopy = getRestockAmounts(j);
             // Filter out products that are disabled
             Object.keys(productDisabled).forEach(productNo => {
                 if (productDisabled[productNo]) {
