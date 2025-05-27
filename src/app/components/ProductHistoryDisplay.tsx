@@ -222,6 +222,21 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const totalAverageSales = calculateTotalAverageSales();
 
+    const calculateTotalStock = () => {
+        if (!productHistory || productHistory.length === 0) {
+            return 0;
+        }
+
+        let totalStock = 0;
+
+        for (const history of productHistory) {
+            totalStock += history.stock / unitsPerPack[history.productNo];
+        }
+
+        return totalStock;
+    }
+
+    const totalStock = calculateTotalStock();
 
     const handleAverageMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
@@ -336,6 +351,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
             </div>
             <div className="my-2">
                 <h2 className="text-xl font-bold mb-2">Total Average Monthly Sales: {totalAverageSales.toFixed(2)} packs</h2>
+                <h2 className="text-xl font-bold mb-2">Total Stock: {totalStock.toFixed(2)} packs</h2>
             </div>
             <div className="flex items-center mb-4">
                 <button
