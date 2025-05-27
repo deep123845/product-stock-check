@@ -135,7 +135,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const averageMonthlySales = getAverageMonthlySales();
 
-    const getRestockAmounts = () => {
+    const getRestockAmounts = (weeksRestock: number) => {
         if (!productHistory || productHistory.length === 0) {
             return {};
         }
@@ -149,7 +149,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
             const unitsPerPackValue = unitsPerPack[productNo] || 1;
 
             const weeksInMonth = 4;
-            const monthsRestock = weeksToRestock / weeksInMonth;
+            const monthsRestock = weeksRestock / weeksInMonth;
             const restockUnits = Math.max(0, ((averageSales * monthsRestock) - stock));
             restockAmounts[productNo] = restockUnits / unitsPerPackValue;
         }
@@ -157,37 +157,47 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         return restockAmounts;
     }
 
-    const restockAmounts = getRestockAmounts();
+    const restockAmounts = getRestockAmounts(weeksToRestock);
 
     const generatePriorityRestockList = (): { restockList: { [productNo: string]: number }, restockTotal: number } => {
         if (!productHistory || productHistory.length === 0) {
             return { restockList: {}, restockTotal: 0 };
         }
 
-        const restockAmountsCopy = { ...restockAmounts };
-        // Filter out products that are disabled
-        Object.keys(productDisabled).forEach(productNo => {
-            if (productDisabled[productNo]) {
-                delete restockAmountsCopy[productNo];
-            }
-        });
-
+        const minAmount = 0.5;
         const restockList: { [productNo: string]: number } = {};
         let restockTotal = 0;
 
-        for (let i = 0; i < maxPacks; i++) {
-            const maxRestockProductNo = Object.keys(restockAmountsCopy).reduce((a, b) => restockAmountsCopy[a] > restockAmountsCopy[b] ? a : b);
-            if (restockAmountsCopy[maxRestockProductNo] <= 0.5) {
-                break; // No more products to restock
+        for (let j = 1; j <= weeksToRestock; j++) {
+            let restockAmountsCopy = getRestockAmounts(j);
+            // Filter out products that are disabled
+            Object.keys(productDisabled).forEach(productNo => {
+                if (productDisabled[productNo]) {
+                    delete restockAmountsCopy[productNo];
+                }
+            });
+
+            for (const productNo in restockAmountsCopy) {
+                if (restockList[productNo]) {
+                    restockAmountsCopy[productNo] = restockAmountsCopy[productNo] - restockList[productNo];
+                }
             }
 
-            if (!restockList[maxRestockProductNo]) {
-                restockList[maxRestockProductNo] = 0;
-            }
+            while (restockTotal < maxPacks) {
+                const maxRestockProductNo = Object.keys(restockAmountsCopy).reduce((a, b) => restockAmountsCopy[a] > restockAmountsCopy[b] ? a : b);
 
-            restockList[maxRestockProductNo] += 1;
-            restockAmountsCopy[maxRestockProductNo] -= 1;
-            restockTotal += 1;
+                if (restockAmountsCopy[maxRestockProductNo] < minAmount) {
+                    break; // No more products to restock
+                }
+
+                if (!restockList[maxRestockProductNo]) {
+                    restockList[maxRestockProductNo] = 0;
+                }
+
+                restockList[maxRestockProductNo] += 1;
+                restockAmountsCopy[maxRestockProductNo] -= 1;
+                restockTotal += 1;
+            }
         }
         const output = { restockList, restockTotal };
         return output;
