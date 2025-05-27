@@ -5,7 +5,7 @@ interface FileUploadParserProps {
     onFileContentChange?: (parsedLines: string[]) => void;
 }
 
-const FileUploadParser: React.FC<FileUploadParserProps> = ({ onFileContentChange }) => {
+const TextFileUploadParser: React.FC<FileUploadParserProps> = ({ onFileContentChange }) => {
     const [fileName, setFileName] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -67,4 +67,4 @@ const FileUploadParser: React.FC<FileUploadParserProps> = ({ onFileContentChange
     );
 };
 
-export default FileUploadParser;
+export default TextFileUploadParser;

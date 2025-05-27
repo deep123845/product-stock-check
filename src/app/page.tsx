@@ -1,5 +1,5 @@
 "use client";
-import FileUploadParser from "./components/FileUploadParser";
+import TextFileUploadParser from "./components/TextFileUploadParser";
 import { useState } from "react";
 import ProductHistoryDisplay, { ProductHistory } from "./components/ProductHistoryDisplay";
 
@@ -114,7 +114,7 @@ export default function Home() {
     <div>
       <h1 className="text-3xl font-bold text-center mt-8">Product Stock Check</h1>
       <p className="text-center mt-4">Upload a text file to check product stock.</p>
-      <FileUploadParser onFileContentChange={handleFileContentChange} />
+      <TextFileUploadParser onFileContentChange={handleFileContentChange} />
       <ProductHistoryDisplay productHistory={productHistory} months={months} />
     </div>
   );
