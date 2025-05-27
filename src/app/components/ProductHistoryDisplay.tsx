@@ -206,6 +206,22 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const { restockList, restockTotal } = generatePriorityRestockList();
 
+    const calculateTotalAverageSales = () => {
+        if (!productHistory || productHistory.length === 0) {
+            return 0;
+        }
+
+        let totalSales = 0;
+
+        for (const productNo in averageMonthlySales) {
+            totalSales += averageMonthlySales[productNo] / unitsPerPack[productNo];
+        }
+
+        return totalSales;
+    }
+
+    const totalAverageSales = calculateTotalAverageSales();
+
 
     const handleAverageMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
@@ -317,6 +333,9 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                     onChange={handleShowInPacksChange}
                 />
                 <p className="text-l font-bold">{"Show average monthly sales in packs"}</p>
+            </div>
+            <div className="my-2">
+                <h2 className="text-xl font-bold mb-2">Total Average Monthly Sales: {totalAverageSales.toFixed(2)} packs</h2>
             </div>
             <div className="flex items-center mb-4">
                 <button
