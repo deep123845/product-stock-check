@@ -25,6 +25,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const [productDisabled, setProductDisabled] = useState<{ [productNo: string]: boolean }>({});
     const [maxPacks, setMaxPacks] = useState<number>(45);
     const [tableVisible, setTableVisible] = useState<boolean>(true);
+    const [showInPacks, setShowInPacks] = useState<boolean>(true);
 
     useEffect(() => {
         const storedUnitsPerPack = localStorage.getItem("unitsPerPack");
@@ -248,6 +249,10 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         setTableVisible(!tableVisible);
     }
 
+    const handleShowInPacksChange = () => {
+        setShowInPacks(!showInPacks);
+    }
+
     return (
         <div className="overflow-x-auto">
             <div className="flex items-center">
@@ -304,6 +309,15 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                 />
                 <p className="text-l font-bold">{"Max packs to restock"}</p>
             </div>
+            <div className="flex items-center">
+                <input
+                    type="checkbox"
+                    className="border border-gray-300 p-2 mr-2"
+                    checked={showInPacks}
+                    onChange={handleShowInPacksChange}
+                />
+                <p className="text-l font-bold">{"Show average monthly sales in packs"}</p>
+            </div>
             <div className="flex items-center mb-4">
                 <button
                     className="bg-gray-500 text-white p-2 rounded mr-2"
@@ -351,7 +365,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                                 </td>
                                 <td className="border border-gray-300 p-2">{history.description}</td>
                                 <td className="border border-gray-300 p-2">{history.stock}</td>
-                                <td className="border border-gray-300 p-2">{averageMonthlySales[history.productNo].toFixed(2)}</td>
+                                <td className="border border-gray-300 p-2">{(averageMonthlySales[history.productNo] / (showInPacks ? unitsPerPack[history.productNo] : 1)).toFixed(2)}</td>
                                 <td className="border border-gray-300 p-2">{restockAmounts[history.productNo].toFixed(2)}</td>
                                 {monthIndexes.map((monthIndex) => (
                                     <td
