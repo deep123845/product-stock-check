@@ -1,11 +1,11 @@
 "use client";
 import React, { useState } from "react";
 
-interface FileUploadParserProps {
+interface TextFileUploadParserProps {
     onFileContentChange?: (parsedLines: string[]) => void;
 }
 
-const TextFileUploadParser: React.FC<FileUploadParserProps> = ({ onFileContentChange }) => {
+const TextFileUploadParser: React.FC<TextFileUploadParserProps> = ({ onFileContentChange }) => {
     const [fileName, setFileName] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
