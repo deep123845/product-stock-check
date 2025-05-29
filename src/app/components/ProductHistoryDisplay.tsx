@@ -23,7 +23,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const [includeCurrentMonth, setIncludeCurrentMonth] = useState<boolean>(true);
     const [currentDay, setCurrentDay] = useState<number>(new Date().getDate());
     const [weeksToRestock, setWeeksToRestock] = useState<number>(4);
-    const [unitsPerPack, setUnitsPerPack] = useState<{ [productNo: string]: number }>({});
+    const [unitsPerPackOverride, setUnitsPerPackOverride] = useState<{ [productNo: string]: number }>({});
     const [productDisabled, setProductDisabled] = useState<{ [productNo: string]: boolean }>({});
     const [maxPacks, setMaxPacks] = useState<number>(45);
     const [tableVisible, setTableVisible] = useState<boolean>(true);
@@ -32,7 +32,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     useEffect(() => {
         const storedUnitsPerPack = localStorage.getItem("unitsPerPack");
         if (storedUnitsPerPack) {
-            setUnitsPerPack(JSON.parse(storedUnitsPerPack));
+            setUnitsPerPackOverride(JSON.parse(storedUnitsPerPack));
         }
         const storedProductDisabled = localStorage.getItem("productDisabled");
         if (storedProductDisabled) {
@@ -40,17 +40,21 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         }
     }, []);
 
-    useEffect(() => {
-        const unitsPerPackNew: { [productNo: string]: number } = {};
-        for (const product of productHistory) {
-            if (unitsPerPack[product.productNo] === undefined) {
-                unitsPerPackNew[product.productNo] = productInfo?.find(info => info.UPC === product.productNo)?.UnitsPerCase || -1;
-            } else {
-                unitsPerPackNew[product.productNo] = unitsPerPack[product.productNo];
+    const consolidateUnitsPerPack = () => {
+        const newUnitsPerPack: { [productNo: string]: number } = { ...unitsPerPackOverride };
+
+        if (productInfo) {
+            for (const product of productInfo) {
+                if (newUnitsPerPack[product.UPC] === undefined) {
+                    newUnitsPerPack[product.UPC] = product.UnitsPerCase;
+                }
             }
         }
-        setUnitsPerPack(unitsPerPackNew);
-    }, [productHistory, productInfo]);
+
+        return newUnitsPerPack;
+    }
+
+    const unitsPerPack = consolidateUnitsPerPack();
 
     const getfirstMonths = (productHistory: ProductHistory[]) => {
         if (!productHistory || productHistory.length === 0) {
@@ -274,11 +278,9 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const handleUnitsPerPackChange = (event: React.ChangeEvent<HTMLInputElement>, productNo: string) => {
         const value = event.target.value;
-        const newUnitsPerPack = { ...unitsPerPack, [productNo]: value ? parseInt(value) : 0 };
-        setUnitsPerPack(newUnitsPerPack);
-        const overideUnitsPerPack = JSON.parse(localStorage.getItem("unitsPerPack") || "{}");
-        overideUnitsPerPack[productNo] = newUnitsPerPack[productNo];
-        localStorage.setItem("unitsPerPack", JSON.stringify(overideUnitsPerPack));
+        const newUnitsPerPack = { ...unitsPerPackOverride, [productNo]: value ? parseInt(value) : -1 };
+        setUnitsPerPackOverride(newUnitsPerPack);
+        localStorage.setItem("unitsPerPack", JSON.stringify(newUnitsPerPack));
     }
 
     const handleProductDisabledChange = (productNo: string) => {
