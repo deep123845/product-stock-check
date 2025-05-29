@@ -2,13 +2,19 @@
 import TextFileUploadParser from "./components/TextFileUploadParser";
 import { useState } from "react";
 import ProductHistoryDisplay, { ProductHistory } from "./components/ProductHistoryDisplay";
+import CatalogueFileUploadParser from "./components/CatalogueFileUploadParser";
 
 export default function Home() {
 
   const [parsedLines, setParsedLines] = useState<string[]>([]);
+  const [catalogueProducts, setCatalogueProducts] = useState<{ LCBONumber: string; UnitsPerCase: number; UPC: string; Supplier: string }[]>([]);
 
   const handleFileContentChange = (lines: string[]) => {
     setParsedLines(lines);
+  }
+
+  const handleCatalogueFileContentChange = (lines: { LCBONumber: string; UnitsPerCase: number; UPC: string; Supplier: string }[]) => {
+    setCatalogueProducts(lines);
   }
 
   const processLines = (lines: string[]) => {
@@ -114,8 +120,9 @@ export default function Home() {
     <div>
       <h1 className="text-3xl font-bold text-center mt-8">Product Stock Check</h1>
       <p className="text-center mt-4">Upload a text file to check product stock.</p>
+      <CatalogueFileUploadParser onFileContentChange={handleCatalogueFileContentChange} />
       <TextFileUploadParser onFileContentChange={handleFileContentChange} />
-      <ProductHistoryDisplay productHistory={productHistory} months={months} />
+      <ProductHistoryDisplay productHistory={productHistory} months={months} productInfo={catalogueProducts} />
     </div>
   );
 }

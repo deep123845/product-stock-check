@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { ProductInfo } from "./CatalogueFileUploadParser";
 export interface ProductHistory {
     productNo: string;
     supplier: string;
@@ -10,10 +11,11 @@ export interface ProductHistory {
 
 interface ProductHistoryDisplayProps {
     productHistory: ProductHistory[];
+    productInfo?: ProductInfo[];
     months: { [id: number]: string };
 }
 
-const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHistory, months }) => {
+const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHistory, productInfo, months }) => {
     // Months ordered from latest to oldest
     const monthIndexes = Object.keys(months).map(Number).sort((a, b) => b - a);
 
@@ -37,6 +39,18 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
             setProductDisabled(JSON.parse(storedProductDisabled));
         }
     }, []);
+
+    useEffect(() => {
+        const unitsPerPackNew: { [productNo: string]: number } = {};
+        for (const product of productHistory) {
+            if (unitsPerPack[product.productNo] === undefined) {
+                unitsPerPackNew[product.productNo] = productInfo?.find(info => info.UPC === product.productNo)?.UnitsPerCase || -1;
+            } else {
+                unitsPerPackNew[product.productNo] = unitsPerPack[product.productNo];
+            }
+        }
+        setUnitsPerPack(unitsPerPackNew);
+    }, [productHistory, productInfo]);
 
     const getfirstMonths = (productHistory: ProductHistory[]) => {
         if (!productHistory || productHistory.length === 0) {
@@ -262,7 +276,9 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         const value = event.target.value;
         const newUnitsPerPack = { ...unitsPerPack, [productNo]: value ? parseInt(value) : 0 };
         setUnitsPerPack(newUnitsPerPack);
-        localStorage.setItem("unitsPerPack", JSON.stringify(newUnitsPerPack));
+        const overideUnitsPerPack = JSON.parse(localStorage.getItem("unitsPerPack") || "{}");
+        overideUnitsPerPack[productNo] = newUnitsPerPack[productNo];
+        localStorage.setItem("unitsPerPack", JSON.stringify(overideUnitsPerPack));
     }
 
     const handleProductDisabledChange = (productNo: string) => {
