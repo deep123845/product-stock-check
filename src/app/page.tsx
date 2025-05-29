@@ -1,19 +1,20 @@
 "use client";
 import TextFileUploadParser from "./components/TextFileUploadParser";
 import { useState } from "react";
-import ProductHistoryDisplay, { ProductHistory } from "./components/ProductHistoryDisplay";
+import ProductHistoryDisplay from "./components/ProductHistoryDisplay";
 import CatalogueFileUploadParser from "./components/CatalogueFileUploadParser";
+import { ProductHistory, ProductInfo } from "./lib/types";
 
 export default function Home() {
 
   const [parsedLines, setParsedLines] = useState<string[]>([]);
-  const [catalogueProducts, setCatalogueProducts] = useState<{ LCBONumber: string; UnitsPerCase: number; UPC: string; Supplier: string }[]>([]);
+  const [catalogueProducts, setCatalogueProducts] = useState<ProductInfo[]>([]);
 
   const handleFileContentChange = (lines: string[]) => {
     setParsedLines(lines);
   }
 
-  const handleCatalogueFileContentChange = (lines: { LCBONumber: string; UnitsPerCase: number; UPC: string; Supplier: string }[]) => {
+  const handleCatalogueFileContentChange = (lines: ProductInfo[]) => {
     setCatalogueProducts(lines);
   }
 

@@ -1,15 +1,9 @@
 "use client";
 import React, { useState } from "react";
+import { ProductInfo } from "@/app/lib/types";
 
 interface CatalogueFileUploadParserProps {
     onFileContentChange?: (parsedLines: ProductInfo[]) => void;
-}
-
-export interface ProductInfo {
-    LCBONumber: string;
-    UnitsPerCase: number;
-    UPC: string;
-    Supplier: string;
 }
 
 const CatalogueFileUploadParser: React.FC<CatalogueFileUploadParserProps> = ({ onFileContentChange }) => {
@@ -60,11 +54,11 @@ const CatalogueFileUploadParser: React.FC<CatalogueFileUploadParserProps> = ({ o
         let parsedLines = lines.map((line) => {
             const parts = line.split(",");
             const LCBONumber = parts[0].split('"')[1];
-            const UnitsPerCase = parseInt(parts[3].trim());
+            const unitsPerCase = parseInt(parts[3].trim());
             const UPC = parts[7].split('"')[1];
-            const WholesalePrice = parseFloat(parts[15].split('"')[1]);
-            const Supplier = parts[20].trim();
-            return { LCBONumber, UnitsPerCase, UPC, WholesalePrice, Supplier } as ProductInfo;
+            const wholesalePrice = parseFloat(parts[15].split('"')[1]);
+            const supplier = parts[20].trim();
+            return { LCBONumber, unitsPerCase, UPC, wholesalePrice, supplier } as ProductInfo;
         });
 
         parsedLines = [...parsedLines.slice(1)];

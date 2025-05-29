@@ -1,13 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { ProductInfo } from "./CatalogueFileUploadParser";
-export interface ProductHistory {
-    productNo: string;
-    supplier: string;
-    description: string;
-    stock: number;
-    sales: { [id: number]: number };
-}
+import { ProductInfo, ProductHistory } from "@/app/lib/types";
 
 interface ProductHistoryDisplayProps {
     productHistory: ProductHistory[];
@@ -46,7 +39,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         if (productInfo) {
             for (const product of productInfo) {
                 if (newUnitsPerPack[product.UPC] === undefined) {
-                    newUnitsPerPack[product.UPC] = product.UnitsPerCase;
+                    newUnitsPerPack[product.UPC] = product.unitsPerCase;
                 }
             }
         }
