@@ -181,34 +181,61 @@ export const generatePriorityRestockList = (
     return output;
 }
 
+export const convertToPerPack = (averageMonthlySales: { [productNo: string]: number }, unitsPerPack: { [productNo: string]: number }) => {
+    const averageMonthlySalesPerPack: { [productNo: string]: number } = {};
+
+    for (const productNo in averageMonthlySales) {
+        if (!unitsPerPack[productNo]) {
+            averageMonthlySalesPerPack[productNo] = 0;
+            continue;
+        }
+        averageMonthlySalesPerPack[productNo] = averageMonthlySales[productNo] / unitsPerPack[productNo];
+    }
+
+    return averageMonthlySalesPerPack;
+}
+
 export const calculateTotalAverageSales = (
     productHistory: ProductHistory[],
     averageMonthlySales: { [productNo: string]: number },
-    unitsPerPack: { [productNo: string]: number }
 ) => {
     if (!productHistory || productHistory.length === 0) {
         return 0;
     }
 
-    let totalSales = 0;
-
-    for (const productNo in averageMonthlySales) {
-        totalSales += averageMonthlySales[productNo] / unitsPerPack[productNo];
-    }
+    const totalSales = Object.keys(averageMonthlySales).reduce((sum, productNo) => {
+        const sales = averageMonthlySales[productNo];
+        return sum + (sales || 0);
+    }, 0);
 
     return totalSales;
 }
 
-export const calculateTotalStock = (productHistory: ProductHistory[], unitsPerPack: { [productNo: string]: number }) => {
+export const calculateTotalStockPerPack = (productHistory: ProductHistory[], unitsPerPack: { [productNo: string]: number }) => {
     if (!productHistory || productHistory.length === 0) {
         return 0;
     }
 
-    let totalStock = 0;
+    let totalStockPerPack = 0;
 
     for (const history of productHistory) {
-        totalStock += history.stock / unitsPerPack[history.productNo];
+        if (!history.stock || !unitsPerPack[history.productNo]) {
+            continue; // Skip products with no stock or units per pack
+        }
+        totalStockPerPack += history.stock / unitsPerPack[history.productNo];
     }
+
+    return totalStockPerPack;
+}
+
+export const calculateTotalStock = (productHistory: ProductHistory[]) => {
+    if (!productHistory || productHistory.length === 0) {
+        return 0;
+    }
+
+    const totalStock = productHistory.reduce((sum, history) => {
+        return sum + (history.stock || 0);
+    }, 0);
 
     return totalStock;
 }

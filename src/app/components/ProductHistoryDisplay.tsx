@@ -1,7 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { ProductInfo, ProductHistory } from "@/app/lib/types";
-import { calculateTotalAverageSales, calculateTotalStock, generatePriorityRestockList, getAverageMonthlySales, getIncludedMonths, getRestockAmounts } from "@/app/lib/generateStatistics";
+import {
+    calculateTotalAverageSales, calculateTotalStock, convertToPerPack,
+    generatePriorityRestockList, getAverageMonthlySales, getIncludedMonths,
+    getRestockAmounts, calculateTotalStockPerPack
+} from "@/app/lib/generateStatistics";
 
 interface ProductHistoryDisplayProps {
     productHistory: ProductHistory[];
@@ -52,10 +56,13 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const includedMonths = getIncludedMonths(productHistory, monthIndices, monthsforAverage, includeCurrentMonth);
     const averageMonthlySales = getAverageMonthlySales(productHistory, monthIndices, includedMonths, currentDay);
+    const averageMonthlySalesPerPack = convertToPerPack(averageMonthlySales, unitsPerPack);
     const restockAmounts = getRestockAmounts(productHistory, weeksToRestock, averageMonthlySales, unitsPerPack);
     const { restockList, restockTotal } = generatePriorityRestockList(productHistory, weeksToRestock, averageMonthlySales, unitsPerPack, productDisabled, maxPacks);;
-    const totalStock = calculateTotalStock(productHistory, unitsPerPack);
-    const totalAverageSales = calculateTotalAverageSales(productHistory, averageMonthlySales, unitsPerPack);
+    const totalStock = calculateTotalStock(productHistory);
+    const totalStockPerPack = calculateTotalStockPerPack(productHistory, unitsPerPack);
+    const totalAverageSales = calculateTotalAverageSales(productHistory, averageMonthlySales);
+    const totalAverageSalesPerPack = calculateTotalAverageSales(productHistory, averageMonthlySalesPerPack);
 
     const handleAverageMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
@@ -169,8 +176,8 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                 <p className="text-l font-bold">{"Show average monthly sales in packs"}</p>
             </div>
             <div className="my-2">
-                <h2 className="text-xl font-bold mb-2">Total Average Monthly Sales: {totalAverageSales.toFixed(2)} packs</h2>
-                <h2 className="text-xl font-bold mb-2">Total Stock: {totalStock.toFixed(2)} packs</h2>
+                <h2 className="text-xl font-bold mb-2">Total Average Monthly Sales: {showInPacks ? totalAverageSalesPerPack.toFixed(2) : totalAverageSales.toFixed(2)} packs</h2>
+                <h2 className="text-xl font-bold mb-2">Total Stock: {showInPacks ? totalStockPerPack.toFixed(2) : totalStock.toFixed(2)} packs</h2>
             </div>
             <div className="flex items-center mb-4">
                 <button
@@ -219,7 +226,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                                 </td>
                                 <td className="border border-gray-300 p-2">{history.description}</td>
                                 <td className="border border-gray-300 p-2">{history.stock}</td>
-                                <td className="border border-gray-300 p-2">{(averageMonthlySales[history.productNo] / (showInPacks ? unitsPerPack[history.productNo] : 1)).toFixed(2)}</td>
+                                <td className="border border-gray-300 p-2">{showInPacks ? averageMonthlySalesPerPack[history.productNo].toFixed(2) : averageMonthlySales[history.productNo].toFixed(2)}</td>
                                 <td className="border border-gray-300 p-2">{restockAmounts[history.productNo].toFixed(2)}</td>
                                 {monthIndices.map((monthIndex) => (
                                     <td
