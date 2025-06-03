@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { ProductInfo, ProductHistory } from "@/app/lib/types";
+import { calculateTotalAverageSales, calculateTotalStock, generatePriorityRestockList, getAverageMonthlySales, getIncludedMonths, getRestockAmounts } from "@/app/lib/generateStatistics";
 
 interface ProductHistoryDisplayProps {
     productHistory: ProductHistory[];
@@ -10,7 +11,7 @@ interface ProductHistoryDisplayProps {
 
 const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHistory, productInfo, months }) => {
     // Months ordered from latest to oldest
-    const monthIndexes = Object.keys(months).map(Number).sort((a, b) => b - a);
+    const monthIndices = Object.keys(months).map(Number).sort((a, b) => b - a);
 
     const [monthsforAverage, setMonthsforAverage] = useState<number>(0);
     const [includeCurrentMonth, setIncludeCurrentMonth] = useState<boolean>(true);
@@ -49,205 +50,12 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const unitsPerPack = consolidateUnitsPerPack();
 
-    const getfirstMonths = (productHistory: ProductHistory[]) => {
-        if (!productHistory || productHistory.length === 0) {
-            return {};
-        }
-        const firstMonths: { [productNo: string]: number } = {};
-
-        for (let i = 0; i < productHistory.length; i++) {
-            const history = productHistory[i];
-            const sales = history.sales;
-            const firstMonth = Math.min(...Object.keys(sales).map(Number));
-
-            firstMonths[history.productNo] = firstMonth;
-        }
-
-        return firstMonths;
-    }
-
-    const firstMonth = getfirstMonths(productHistory);
-
-    // get the fraction of the last month that has passed (days elsapsed/ days in month)
-    const getLastMonthFraction = currentDay / new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-
-    const getIncludedMonths = () => {
-        if (!productHistory || productHistory.length === 0) {
-            return {};
-        }
-        const includedMonths: { [productNo: string]: number[] } = {};
-
-        for (let i = 0; i < productHistory.length; i++) {
-            const history = productHistory[i];
-
-            includedMonths[history.productNo] = [];
-
-            for (let j = 0; j < monthIndexes.length; j++) {
-                const monthIndex = monthIndexes[j];
-
-                if (firstMonth[history.productNo] >= monthIndex) {
-                    continue; // Skip first month and any months before it
-                }
-
-                if (!includeCurrentMonth && (Math.max(...monthIndexes) === monthIndex)) {
-                    continue; // Skip the current month if includeCurrentMonth is false
-                }
-
-                if (includedMonths[history.productNo].length >= monthsforAverage && monthsforAverage > 0) {
-                    break; // Stop if we have enough months
-                }
-
-                includedMonths[history.productNo].push(monthIndex);
-            }
-        }
-
-        return includedMonths;
-    }
-
-    const includedMonths = getIncludedMonths();
-
-    const getAverageMonthlySales = () => {
-        if (!productHistory || productHistory.length === 0) {
-            return {};
-        }
-        const averageSales: { [productNo: string]: number } = {};
-
-        for (let i = 0; i < productHistory.length; i++) {
-            const history = productHistory[i];
-            const productNo = history.productNo;
-            const sales = history.sales;
-
-            let monthsCount = 0;
-            let totalSales = 0;
-
-            for (let j = 0; j < includedMonths[productNo].length; j++) {
-                const monthIndex = includedMonths[productNo][j];
-                const salesValue = sales[monthIndex] || 0;
-
-                totalSales += salesValue;
-
-                // If the month is the last month, add the fraction of the month that has passed
-                if (monthIndex === Math.max(...monthIndexes)) {
-                    monthsCount += getLastMonthFraction;
-                } else {
-                    monthsCount++;
-                }
-            }
-
-            if (monthsCount === 0) {
-                averageSales[productNo] = 0;
-                continue;
-            }
-
-            averageSales[history.productNo] = totalSales / monthsCount;
-        }
-
-        return averageSales;
-    }
-
-    const averageMonthlySales = getAverageMonthlySales();
-
-    const getRestockAmounts = (weeksRestock: number) => {
-        if (!productHistory || productHistory.length === 0) {
-            return {};
-        }
-        const restockAmounts: { [productNo: string]: number } = {};
-
-        for (let i = 0; i < productHistory.length; i++) {
-            const history = productHistory[i];
-            const productNo = history.productNo;
-            const stock = history.stock || 0;
-            const averageSales = averageMonthlySales[productNo];
-            const unitsPerPackValue = unitsPerPack[productNo] || 1;
-
-            const weeksInMonth = 4;
-            const monthsRestock = weeksRestock / weeksInMonth;
-            const restockUnits = Math.max(0, ((averageSales * monthsRestock) - stock));
-            restockAmounts[productNo] = restockUnits / unitsPerPackValue;
-        }
-
-        return restockAmounts;
-    }
-
-    const restockAmounts = getRestockAmounts(weeksToRestock);
-
-    const generatePriorityRestockList = (): { restockList: { [productNo: string]: number }, restockTotal: number } => {
-        if (!productHistory || productHistory.length === 0) {
-            return { restockList: {}, restockTotal: 0 };
-        }
-
-        const minAmount = 0.5;
-        const restockList: { [productNo: string]: number } = {};
-        let restockTotal = 0;
-
-        for (let j = 1; j <= weeksToRestock; j++) {
-            const restockAmountsCopy = getRestockAmounts(j);
-            // Filter out products that are disabled
-            Object.keys(productDisabled).forEach(productNo => {
-                if (productDisabled[productNo]) {
-                    delete restockAmountsCopy[productNo];
-                }
-            });
-
-            for (const productNo in restockAmountsCopy) {
-                if (restockList[productNo]) {
-                    restockAmountsCopy[productNo] = restockAmountsCopy[productNo] - restockList[productNo];
-                }
-            }
-
-            while (restockTotal < maxPacks) {
-                const maxRestockProductNo = Object.keys(restockAmountsCopy).reduce((a, b) => restockAmountsCopy[a] > restockAmountsCopy[b] ? a : b);
-
-                if (restockAmountsCopy[maxRestockProductNo] < minAmount) {
-                    break; // No more products to restock
-                }
-
-                if (!restockList[maxRestockProductNo]) {
-                    restockList[maxRestockProductNo] = 0;
-                }
-
-                restockList[maxRestockProductNo] += 1;
-                restockAmountsCopy[maxRestockProductNo] -= 1;
-                restockTotal += 1;
-            }
-        }
-        const output = { restockList, restockTotal };
-        return output;
-    }
-
-    const { restockList, restockTotal } = generatePriorityRestockList();
-
-    const calculateTotalAverageSales = () => {
-        if (!productHistory || productHistory.length === 0) {
-            return 0;
-        }
-
-        let totalSales = 0;
-
-        for (const productNo in averageMonthlySales) {
-            totalSales += averageMonthlySales[productNo] / unitsPerPack[productNo];
-        }
-
-        return totalSales;
-    }
-
-    const totalAverageSales = calculateTotalAverageSales();
-
-    const calculateTotalStock = () => {
-        if (!productHistory || productHistory.length === 0) {
-            return 0;
-        }
-
-        let totalStock = 0;
-
-        for (const history of productHistory) {
-            totalStock += history.stock / unitsPerPack[history.productNo];
-        }
-
-        return totalStock;
-    }
-
-    const totalStock = calculateTotalStock();
+    const includedMonths = getIncludedMonths(productHistory, monthIndices, monthsforAverage, includeCurrentMonth);
+    const averageMonthlySales = getAverageMonthlySales(productHistory, monthIndices, includedMonths, currentDay);
+    const restockAmounts = getRestockAmounts(productHistory, weeksToRestock, averageMonthlySales, unitsPerPack);
+    const { restockList, restockTotal } = generatePriorityRestockList(productHistory, weeksToRestock, averageMonthlySales, unitsPerPack, productDisabled, maxPacks);;
+    const totalStock = calculateTotalStock(productHistory, unitsPerPack);
+    const totalAverageSales = calculateTotalAverageSales(productHistory, averageMonthlySales, unitsPerPack);
 
     const handleAverageMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
@@ -383,7 +191,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                             <th className="border border-gray-300 p-2">Stock</th>
                             <th className="border border-gray-300 p-2">Avg Monthly Sales</th>
                             <th className="border border-gray-300 p-2">{`Restock (Packs)`}</th>
-                            {monthIndexes.map((index) => (
+                            {monthIndices.map((index) => (
                                 <th key={index} className="border border-gray-300 p-2">{months[index]}</th>
                             ))}
                         </tr>
@@ -413,7 +221,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                                 <td className="border border-gray-300 p-2">{history.stock}</td>
                                 <td className="border border-gray-300 p-2">{(averageMonthlySales[history.productNo] / (showInPacks ? unitsPerPack[history.productNo] : 1)).toFixed(2)}</td>
                                 <td className="border border-gray-300 p-2">{restockAmounts[history.productNo].toFixed(2)}</td>
-                                {monthIndexes.map((monthIndex) => (
+                                {monthIndices.map((monthIndex) => (
                                     <td
                                         key={monthIndex}
                                         className={`border border-gray-300 p-2 ${includedMonths[history.productNo].includes(monthIndex) ? "text-green-500" : "text-red-500"}`}
