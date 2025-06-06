@@ -249,6 +249,12 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                             <th className="border border-gray-300 p-2">Product No</th>
                             <th className="border border-gray-300 p-2">Description</th>
                             <th className="border border-gray-300 p-2">Restock Amount (Packs)</th>
+                            <th className="border border-gray-300 p-2">Stock</th>
+                            <th className="border border-gray-300 p-2">Avg Monthly Sales</th>
+                            {monthIndices.map((index) => (
+                                index < monthIndices.length - 2 ? null :
+                                    <th key={index} className="border border-gray-300 p-2">{months[index]}</th>
+                            ))}
                         </tr>
                     </thead>
                     <tbody>
@@ -259,6 +265,18 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                                     {productHistory.find(history => history.productNo === productNo)?.description || "N/A"}
                                 </td>
                                 <td className="border border-gray-300 p-2">{restockList[productNo]}</td>
+                                <td className="border border-gray-300 p-2">
+                                    {productHistory.find(history => history.productNo === productNo)?.stock || 0}
+                                </td>
+                                <td className="border border-gray-300 p-2">
+                                    {showInPacks ? averageMonthlySalesPerPack[productNo].toFixed(2) : averageMonthlySales[productNo].toFixed(2)}
+                                </td>
+                                {monthIndices.map((monthIndex) => (
+                                    monthIndex < monthIndices.length - 2 ? null :
+                                        <td key={monthIndex} className={`border border-gray-300 p-2 ${includedMonths[productNo].includes(monthIndex) ? "text-green-500" : "text-red-500"}`}>
+                                            {productHistory.find(history => history.productNo === productNo)?.sales[monthIndex] || 0}
+                                        </td>
+                                ))}
                             </tr>
                         ))}
                     </tbody>
