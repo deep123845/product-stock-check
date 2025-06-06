@@ -177,7 +177,13 @@ export const generatePriorityRestockList = (
             restockTotal += 1;
         }
     }
-    const output = { restockList, restockTotal };
+    // Order the restock list by amount
+    const orderedRestockList: { [productNo: string]: number } = {};
+    const sortedProductNos = Object.keys(restockList).sort((a, b) => restockList[b] - restockList[a]);
+    for (const productNo of sortedProductNos) {
+        orderedRestockList[productNo] = restockList[productNo];
+    }
+    const output = { restockList: orderedRestockList, restockTotal };
     return output;
 }
 
