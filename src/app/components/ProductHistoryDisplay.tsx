@@ -247,6 +247,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                     <thead>
                         <tr>
                             <th className="border border-gray-300 p-2">Product No</th>
+                            <th className="border border-gray-300 p-2">LCBO Number</th>
                             <th className="border border-gray-300 p-2">Description</th>
                             <th className="border border-gray-300 p-2">Restock Amount (Packs)</th>
                             <th className="border border-gray-300 p-2">Stock</th>
@@ -261,6 +262,9 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                         {Object.keys(restockList).map((productNo, index) => (
                             <tr key={index} className={index % 2 === 0 ? "bg-black" : "bg-gray-800"}>
                                 <td className="border border-gray-300 p-2">{productNo}</td>
+                                <td className="border border-gray-300 p-2">
+                                    {productInfo?.find(info => info.UPC === productNo)?.LCBONumber || "N/A"}
+                                </td>
                                 <td className="border border-gray-300 p-2">
                                     {productHistory.find(history => history.productNo === productNo)?.description || "N/A"}
                                 </td>
