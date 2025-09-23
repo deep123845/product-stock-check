@@ -142,7 +142,7 @@ export const generatePriorityRestockList = (
         return { restockList: {}, restockTotal: 0 };
     }
 
-    const minAmount = 0.5;
+    const minAmount = 0;
     const restockList: { [productNo: string]: number } = {};
     let restockTotal = 0;
 
