@@ -24,6 +24,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const [unitsPerPackOverride, setUnitsPerPackOverride] = useState<{ [productNo: string]: number }>({});
     const [productDisabled, setProductDisabled] = useState<{ [productNo: string]: boolean }>({});
     const [maxPacks, setMaxPacks] = useState<number>(45);
+    const [maxStockPerProduct, setMaxStockPerProduct] = useState<{ [productNo: string]: number }>({});
     const [tableVisible, setTableVisible] = useState<boolean>(true);
     const [showInPacks, setShowInPacks] = useState<boolean>(true);
 
@@ -35,6 +36,10 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         const storedProductDisabled = localStorage.getItem("productDisabled");
         if (storedProductDisabled) {
             setProductDisabled(JSON.parse(storedProductDisabled));
+        }
+        const storedMaxStock = localStorage.getItem("maxStockPerProduct");
+        if (storedMaxStock) {
+            setMaxStockPerProduct(JSON.parse(storedMaxStock));
         }
     }, []);
 
@@ -58,7 +63,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
     const averageMonthlySales = getAverageMonthlySales(productHistory, monthIndices, includedMonths, currentDay);
     const averageMonthlySalesPerPack = convertToPerPack(averageMonthlySales, unitsPerPack);
     const restockAmounts = getRestockAmounts(productHistory, weeksToRestock, averageMonthlySales, unitsPerPack);
-    const { restockList, restockTotal } = generatePriorityRestockList(productHistory, weeksToRestock, averageMonthlySales, unitsPerPack, productDisabled, maxPacks);;
+    const { restockList, restockTotal } = generatePriorityRestockList(productHistory, weeksToRestock, averageMonthlySales, unitsPerPack, productDisabled, maxStockPerProduct, maxPacks);;
     const totalStock = calculateTotalStock(productHistory);
     const totalStockPerPack = calculateTotalStockPerPack(productHistory, unitsPerPack);
     const totalAverageSales = calculateTotalAverageSales(productHistory, averageMonthlySales);
@@ -89,6 +94,13 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
         const newUnitsPerPack = { ...unitsPerPackOverride, [productNo]: value ? parseInt(value) : -1 };
         setUnitsPerPackOverride(newUnitsPerPack);
         localStorage.setItem("unitsPerPack", JSON.stringify(newUnitsPerPack));
+    }
+
+    const handleMaxStockPerProductChange = (event: React.ChangeEvent<HTMLInputElement>, productNo: string) => {
+        const value = event.target.value;
+        const newMaxStockPerProduct = { ...maxStockPerProduct, [productNo]: value ? parseInt(value) : -1 };
+        setMaxStockPerProduct(newMaxStockPerProduct);
+        localStorage.setItem("maxStockPerProduct", JSON.stringify(newMaxStockPerProduct));
     }
 
     const handleProductDisabledChange = (productNo: string) => {
@@ -198,6 +210,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                             <th className="border border-gray-300 p-2">Stock</th>
                             <th className="border border-gray-300 p-2">Avg Monthly Sales</th>
                             <th className="border border-gray-300 p-2">{`Restock (Packs)`}</th>
+                            <th className="border border-gray-300 p-2">Max Stock</th>
                             {monthIndices.map((index) => (
                                 <th key={index} className="border border-gray-300 p-2">{months[index]}</th>
                             ))}
@@ -228,6 +241,15 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                                 <td className="border border-gray-300 p-2">{history.stock}</td>
                                 <td className="border border-gray-300 p-2">{showInPacks ? averageMonthlySalesPerPack[history.productNo].toFixed(2) : averageMonthlySales[history.productNo].toFixed(2)}</td>
                                 <td className="border border-gray-300 p-2">{restockAmounts[history.productNo].toFixed(2)}</td>
+                                <td className="border border-gray-300 p-2">
+                                    <input
+                                        type="number"
+                                        className="border border-gray-300 p-2 w-[100%]"
+                                        value={maxStockPerProduct[history.productNo] || ""}
+                                        onChange={(event) => handleMaxStockPerProductChange(event, history.productNo)}
+                                        min="0"
+                                    />
+                                </td>
                                 {monthIndices.map((monthIndex) => (
                                     <td
                                         key={monthIndex}

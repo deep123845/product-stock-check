@@ -123,8 +123,9 @@ export const getRestockAmounts = (
 
         const weeksInMonth = 4;
         const monthsRestock = weeksRestock / weeksInMonth;
-        const restockUnits = Math.max(0, ((averageSales * monthsRestock) - stock));
-        restockAmounts[productNo] = restockUnits / unitsPerPackValue;
+        const restockPacks = Math.max(0, ((averageSales * monthsRestock) - stock)) / unitsPerPackValue;
+
+        restockAmounts[productNo] = restockPacks;
     }
 
     return restockAmounts;
@@ -136,6 +137,7 @@ export const generatePriorityRestockList = (
     averageMonthlySales: { [productNo: string]: number },
     unitsPerPack: { [productNo: string]: number },
     productDisabled: { [productNo: string]: boolean },
+    maxStockPerProduct: { [productNo: string]: number },
     maxPacks: number
 ): { restockList: { [productNo: string]: number }, restockTotal: number } => {
     if (!productHistory || productHistory.length === 0) {
@@ -146,8 +148,8 @@ export const generatePriorityRestockList = (
     const restockList: { [productNo: string]: number } = {};
     let restockTotal = 0;
 
-    for (let j = 1; j <= weeksToRestock; j++) {
-        const restockAmountsCopy = getRestockAmounts(productHistory, j, averageMonthlySales, unitsPerPack);
+    for (let numWeeks = 1; numWeeks <= weeksToRestock; numWeeks++) {
+        const restockAmountsCopy = getRestockAmounts(productHistory, numWeeks, averageMonthlySales, unitsPerPack);
         // Filter out products that are disabled
         Object.keys(productDisabled).forEach(productNo => {
             if (productDisabled[productNo]) {
@@ -157,11 +159,16 @@ export const generatePriorityRestockList = (
 
         for (const productNo in restockAmountsCopy) {
             if (restockList[productNo]) {
+                //Clamp Restock to max amount set by user
+                restockAmountsCopy[productNo] = Math.min(restockAmountsCopy[productNo], (maxStockPerProduct[productNo] || Number.MAX_SAFE_INTEGER));
+
+                //Remove amount that is already set to be restocked
                 restockAmountsCopy[productNo] = restockAmountsCopy[productNo] - restockList[productNo];
             }
         }
 
         while (restockTotal < maxPacks) {
+            //Get the product that needs the most amount restocked
             const maxRestockProductNo = Object.keys(restockAmountsCopy).reduce((a, b) => restockAmountsCopy[a] > restockAmountsCopy[b] ? a : b);
 
             if (restockAmountsCopy[maxRestockProductNo] < minAmount) {
