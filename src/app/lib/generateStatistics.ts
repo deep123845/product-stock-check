@@ -157,14 +157,22 @@ export const generatePriorityRestockList = (
             }
         });
 
-        for (const productNo in restockAmountsCopy) {
-            if (restockList[productNo]) {
-                //Clamp Restock to max amount set by user
-                restockAmountsCopy[productNo] = Math.min(restockAmountsCopy[productNo], (maxStockPerProduct[productNo] || Number.MAX_SAFE_INTEGER));
+        for (let i = 0; i < productHistory.length; i++) {
+            const history = productHistory[i];
+            const productNo = history.productNo;
 
-                //Remove amount that is already set to be restocked
-                restockAmountsCopy[productNo] = restockAmountsCopy[productNo] - restockList[productNo];
+            if (!restockAmountsCopy[productNo]) { continue; }
+
+            //If there is a max stock amount for the product clamp the restock amount to that
+            if (maxStockPerProduct[productNo]) {
+                const amountToMax = Math.max(maxStockPerProduct[productNo] - history.stock, 0);
+                restockAmountsCopy[productNo] = Math.min(amountToMax, restockAmountsCopy[productNo]);
             }
+
+            if (!restockList[productNo]) { continue; }
+
+            //Subtract amount already in restock list from the remaining required
+            restockAmountsCopy[productNo] = restockAmountsCopy[productNo] - restockList[productNo];
         }
 
         while (restockTotal < maxPacks) {
