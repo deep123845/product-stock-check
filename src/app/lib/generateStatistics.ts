@@ -165,7 +165,8 @@ export const generatePriorityRestockList = (
 
             //If there is a max stock amount for the product clamp the restock amount to that
             if (maxStockPerProduct[productNo]) {
-                const amountToMax = Math.max(maxStockPerProduct[productNo] - history.stock, 0);
+                const stockPacks = history.stock / unitsPerPack[productNo];
+                const amountToMax = Math.max(maxStockPerProduct[productNo] - stockPacks, 0);
                 restockAmountsCopy[productNo] = Math.min(amountToMax, restockAmountsCopy[productNo]);
             }
 
