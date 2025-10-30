@@ -206,7 +206,7 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                         </tr>
                     </thead>
                     <tbody>
-                        {productStatistics.map((statistics, index) => (
+                        {productStatistics.sort((a, b) => b.averageSales - a.averageSales).map((statistics, index) => (
                             <tr key={index} className={index % 2 === 0 ? "bg-black" : "bg-gray-800"}>
                                 <td className="border border-gray-300 p-2">{statistics.LCBONumber}</td>
                                 <td className="border border-gray-300 p-2">
