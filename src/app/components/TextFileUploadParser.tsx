@@ -1,12 +1,14 @@
 "use client";
 import React, { useState } from "react";
 import { ProductHistory } from "@/app/lib/types";
+import { getMonthIndex } from "@/app/lib/monthUtil";
 
 interface TextFileUploadParserProps {
-    onFileContentChange?: (productHistory: ProductHistory[], months: { [id: number]: string }) => void;
+    onFileContentChange?: (productHistory: ProductHistory[]) => void;
 }
 
 const TextFileUploadParser: React.FC<TextFileUploadParserProps> = ({ onFileContentChange }) => {
+
     const [fileName, setFileName] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -15,61 +17,25 @@ const TextFileUploadParser: React.FC<TextFileUploadParserProps> = ({ onFileConte
         return regex.test(str);
     }
 
-    const getMonths = (parsedLines: string[]) => {
-        const monthsSet = new Set<string>();
-
-        // Extract all unique months from the processed lines
-        for (let i = 0; i < parsedLines.length; i++) {
-            const parts = parsedLines[i].split("\t");
-            for (let j = 0; j < parts.length; j++) {
-                if (isMonth(parts[j])) {
-                    monthsSet.add(parts[j]);
-                }
-            }
-        }
-
-        // Sort months in ascending order
-        const sortedMonths = Array.from(monthsSet).sort((a, b) => {
-            const [monthA, yearA] = a.split("-").map(Number);
-            const [monthB, yearB] = b.split("-").map(Number);
-
-            if (yearA === yearB) {
-                return monthA - monthB;
-            }
-            return yearA - yearB;
-        });
-
-        // Create dictionary with index as key and month as value
-        const monthsDict: { [id: number]: string } = {};
-        sortedMonths.forEach((month, index) => {
-            monthsDict[index] = month;
-        });
-
-        return monthsDict;
-    }
-
-    const parseHistory = (lines: string[], months: { [id: number]: string }) => {
+    const parseHistory = (lines: string[]) => {
         const history: ProductHistory[] = [];
 
         for (let i = 0; i < lines.length; i++) {
             const parts = lines[i].split("\t");
             const productNo = parts[0];
-            const supplier = parts[1];
             const description = parts[2];
             const stock = parseInt(parts[3]);
-            const sales: { [id: number]: number } = {};
+            const sales: { [monthId: number]: number } = {};
             const activeMonths = [];
 
             // Populate months for sales
             for (let j = 4; j < parts.length; j++) {
                 if (isMonth(parts[j])) {
-                    // Find the month index by looking through the months dictionary values
-                    const monthEntry = Object.entries(months).find(entry => entry[1] === parts[j]);
-                    if (monthEntry) {
-                        const monthIndex = parseInt(monthEntry[0]);
-                        sales[monthIndex] = 0;
-                        activeMonths.push(monthIndex);
-                    }
+                    const monthIndex = getMonthIndex(parts[j]);
+                    sales[monthIndex] = 0;
+                    activeMonths.push(monthIndex);
+                } else {
+                    break;
                 }
             }
 
@@ -81,7 +47,7 @@ const TextFileUploadParser: React.FC<TextFileUploadParserProps> = ({ onFileConte
                 sales[activeMonths[j]] = parseInt(parts[salesIndex + j]);
             }
 
-            history.push({ productNo, supplier, description, stock, sales });
+            history.push({ productNo, description, stock, sales });
         }
 
         return history;
@@ -121,9 +87,8 @@ const TextFileUploadParser: React.FC<TextFileUploadParserProps> = ({ onFileConte
 
                     if (onFileContentChange) {
                         const parsedLines = parseContent(content);
-                        const months = getMonths(parsedLines);
-                        const productHistory = parseHistory(processLines(parsedLines), months);
-                        onFileContentChange(productHistory, months);
+                        const productHistory = parseHistory(processLines(parsedLines));
+                        onFileContentChange(productHistory);
                     }
                 }
             };
@@ -132,7 +97,7 @@ const TextFileUploadParser: React.FC<TextFileUploadParserProps> = ({ onFileConte
                 setError("Failed to read file.");
 
                 if (onFileContentChange) {
-                    onFileContentChange([], {});
+                    onFileContentChange([]);
                 }
             };
 
@@ -142,7 +107,7 @@ const TextFileUploadParser: React.FC<TextFileUploadParserProps> = ({ onFileConte
             setError("No file selected.");
 
             if (onFileContentChange) {
-                onFileContentChange([], {});
+                onFileContentChange([]);
             }
         }
     };

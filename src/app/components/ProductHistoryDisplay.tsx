@@ -1,22 +1,16 @@
 "use client";
 import { useState, useEffect } from "react";
 import { ProductInfo, ProductHistory } from "@/app/lib/types";
-import {
-    calculateTotalAverageSales, calculateTotalStock, convertToPerPack,
-    generatePriorityRestockList, getAverageMonthlySales, getIncludedMonths,
-    getRestockAmounts, calculateTotalStockPerPack
-} from "@/app/lib/generateStatistics";
+import { generateAllStatistics } from "@/app/lib/generateStatistics";
+import { getLastXMonthIndices, getMonthString } from "@/app/lib/monthUtil";
 
 interface ProductHistoryDisplayProps {
     productHistory: ProductHistory[];
-    productInfo?: ProductInfo[];
-    months: { [id: number]: string };
+    productInfo: ProductInfo[];
 }
 
-const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHistory, productInfo, months }) => {
+const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHistory, productInfo }) => {
     // Months ordered from latest to oldest
-    const monthIndices = Object.keys(months).map(Number).sort((a, b) => b - a);
-
     const [monthsforAverage, setMonthsforAverage] = useState<number>(0);
     const [includeCurrentMonth, setIncludeCurrentMonth] = useState<boolean>(true);
     const [currentDay, setCurrentDay] = useState<number>(new Date().getDate());
@@ -59,15 +53,10 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
 
     const unitsPerPack = consolidateUnitsPerPack();
 
-    const includedMonths = getIncludedMonths(productHistory, monthIndices, monthsforAverage, includeCurrentMonth);
-    const averageMonthlySales = getAverageMonthlySales(productHistory, monthIndices, includedMonths, currentDay);
-    const averageMonthlySalesPerPack = convertToPerPack(averageMonthlySales, unitsPerPack);
-    const restockAmounts = getRestockAmounts(productHistory, weeksToRestock, averageMonthlySales, unitsPerPack);
-    const { restockList, restockTotal } = generatePriorityRestockList(productHistory, weeksToRestock, averageMonthlySales, unitsPerPack, productDisabled, maxStockPerProduct, maxPacks);;
-    const totalStock = calculateTotalStock(productHistory);
-    const totalStockPerPack = calculateTotalStockPerPack(productHistory, unitsPerPack);
-    const totalAverageSales = calculateTotalAverageSales(productHistory, averageMonthlySales);
-    const totalAverageSalesPerPack = calculateTotalAverageSales(productHistory, averageMonthlySalesPerPack);
+    const lastXMonthIndices = getLastXMonthIndices(24);
+    const lastXMonthIndicesRestock = getLastXMonthIndices(2);
+
+    const { totalStatistics, productStatistics } = generateAllStatistics(productHistory, productInfo, monthsforAverage, includeCurrentMonth, currentDay, unitsPerPack, weeksToRestock, productDisabled, maxStockPerProduct, maxPacks);
 
     const handleAverageMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
@@ -188,8 +177,8 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                 <p className="text-l font-bold">{"Show average monthly sales in packs"}</p>
             </div>
             <div className="my-2">
-                <h2 className="text-xl font-bold mb-2">Total Average Monthly Sales: {showInPacks ? totalAverageSalesPerPack.toFixed(2) : totalAverageSales.toFixed(2)} packs</h2>
-                <h2 className="text-xl font-bold mb-2">Total Stock: {showInPacks ? totalStockPerPack.toFixed(2) : totalStock.toFixed(2)} packs</h2>
+                <h2 className="text-xl font-bold mb-2">Total Average Monthly Sales: {showInPacks ? totalStatistics.averageSalesPerPack.toFixed(2) : totalStatistics.averageSales.toFixed(2)} packs</h2>
+                <h2 className="text-xl font-bold mb-2">Total Stock: {showInPacks ? totalStatistics.stockPerPack.toFixed(2) : totalStatistics.stock.toFixed(2)} packs</h2>
             </div>
             <div className="flex items-center mb-4">
                 <button
@@ -203,59 +192,59 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                 <table className="min-w-full border-collapse border border-gray-300">
                     <thead>
                         <tr>
-                            <th className="border border-gray-300 p-2">Product No</th>
+                            <th className="border border-gray-300 p-2">LCBO Number</th>
                             <th className="border border-gray-300 p-2">Disable</th>
-                            <th className="border border-gray-300 p-2">Units per Pack</th>
+                            <th className="border border-gray-300 p-2">Units/Pack</th>
                             <th className="border border-gray-300 p-2">Description</th>
                             <th className="border border-gray-300 p-2">Stock</th>
                             <th className="border border-gray-300 p-2">Avg Monthly Sales</th>
                             <th className="border border-gray-300 p-2">{`Restock (Packs)`}</th>
-                            <th className="border border-gray-300 p-2">Max Stock</th>
-                            {monthIndices.map((index) => (
-                                <th key={index} className="border border-gray-300 p-2">{months[index]}</th>
+                            <th className="border border-gray-300 p-2">Maximum Stock</th>
+                            {lastXMonthIndices.map((index) => (
+                                <th key={index} className="border border-gray-300 p-2">{getMonthString(index)}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {productHistory.map((history, index) => (
+                        {productStatistics.map((statistics, index) => (
                             <tr key={index} className={index % 2 === 0 ? "bg-black" : "bg-gray-800"}>
-                                <td className="border border-gray-300 p-2">{history.productNo}</td>
+                                <td className="border border-gray-300 p-2">{statistics.LCBONumber}</td>
                                 <td className="border border-gray-300 p-2">
                                     <input
                                         type="checkbox"
                                         className="border border-gray-300 p-2"
-                                        checked={productDisabled[history.productNo] || false}
-                                        onChange={() => handleProductDisabledChange(history.productNo)}
+                                        checked={productDisabled[statistics.productNo] || false}
+                                        onChange={() => handleProductDisabledChange(statistics.productNo)}
                                     />
                                 </td>
                                 <td className="border border-gray-300 p-2">
                                     <input
                                         type="number"
                                         className="border border-gray-300 p-2 w-[100%]"
-                                        value={unitsPerPack[history.productNo] || ""}
-                                        onChange={(event) => handleUnitsPerPackChange(event, history.productNo)}
+                                        value={unitsPerPack[statistics.productNo] || ""}
+                                        onChange={(event) => handleUnitsPerPackChange(event, statistics.productNo)}
                                         min="0"
                                     />
                                 </td>
-                                <td className="border border-gray-300 p-2">{history.description}</td>
-                                <td className="border border-gray-300 p-2">{history.stock}</td>
-                                <td className="border border-gray-300 p-2">{showInPacks ? averageMonthlySalesPerPack[history.productNo].toFixed(2) : averageMonthlySales[history.productNo].toFixed(2)}</td>
-                                <td className="border border-gray-300 p-2">{restockAmounts[history.productNo].toFixed(2)}</td>
+                                <td className="border border-gray-300 p-2">{statistics.description}</td>
+                                <td className="border border-gray-300 p-2">{statistics.stock}</td>
+                                <td className="border border-gray-300 p-2">{showInPacks ? statistics.averageSalesPerPack.toFixed(2) : statistics.averageSales.toFixed(2)}</td>
+                                <td className="border border-gray-300 p-2">{statistics.restockRequired.toFixed(2)}</td>
                                 <td className="border border-gray-300 p-2">
                                     <input
                                         type="number"
                                         className="border border-gray-300 p-2 w-[100%]"
-                                        value={maxStockPerProduct[history.productNo] || ""}
-                                        onChange={(event) => handleMaxStockPerProductChange(event, history.productNo)}
+                                        value={statistics.maxStock || ""}
+                                        onChange={(event) => handleMaxStockPerProductChange(event, statistics.productNo)}
                                         min="0"
                                     />
                                 </td>
-                                {monthIndices.map((monthIndex) => (
+                                {lastXMonthIndices.map((monthIndex) => (
                                     <td
                                         key={monthIndex}
-                                        className={`border border-gray-300 p-2 ${includedMonths[history.productNo].includes(monthIndex) ? "text-green-500" : "text-red-500"}`}
+                                        className={`border border-gray-300 p-2 ${statistics.includedMonths.includes(monthIndex) ? "text-green-500" : "text-red-500"}`}
                                     >
-                                        {history.sales[monthIndex] || 0}
+                                        {statistics.sales[monthIndex] || 0}
                                     </td>
                                 ))}
                             </tr>
@@ -264,44 +253,40 @@ const ProductHistoryDisplay: React.FC<ProductHistoryDisplayProps> = ({ productHi
                 </table>
             </div>}
             <div className="mt-4">
-                <h2 className="text-xl font-bold mb-2">Restock List: {restockTotal}</h2>
+                <h2 className="text-xl font-bold mb-2">Restock List: {totalStatistics.restockReccomended}</h2>
                 <table className="min-w-full border-collapse border border-gray-300">
                     <thead>
                         <tr>
-                            <th className="border border-gray-300 p-2">Product No</th>
                             <th className="border border-gray-300 p-2">LCBO Number</th>
                             <th className="border border-gray-300 p-2">Description</th>
                             <th className="border border-gray-300 p-2">Restock Amount (Packs)</th>
                             <th className="border border-gray-300 p-2">Stock</th>
                             <th className="border border-gray-300 p-2">Avg Monthly Sales</th>
-                            {monthIndices.map((index) => (
-                                index < monthIndices.length - 2 ? null :
-                                    <th key={index} className="border border-gray-300 p-2">{months[index]}</th>
+                            {lastXMonthIndicesRestock.map((index) => (
+                                <th key={index} className="border border-gray-300 p-2">{getMonthString(index)}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {Object.keys(restockList).map((productNo, index) => (
+                        {(productStatistics.filter((s) => s.restockReccomended > 0).sort((a, b) => b.restockReccomended - a.restockReccomended)).map((statistics, index) => (
                             <tr key={index} className={index % 2 === 0 ? "bg-black" : "bg-gray-800"}>
-                                <td className="border border-gray-300 p-2">{productNo}</td>
                                 <td className="border border-gray-300 p-2">
-                                    {productInfo?.find(info => info.UPC === productNo)?.LCBONumber || "N/A"}
+                                    {statistics.LCBONumber || "N/A"}
                                 </td>
                                 <td className="border border-gray-300 p-2">
-                                    {productHistory.find(history => history.productNo === productNo)?.description || "N/A"}
+                                    {statistics.description || "N/A"}
                                 </td>
-                                <td className="border border-gray-300 p-2">{restockList[productNo]}</td>
+                                <td className="border border-gray-300 p-2">{statistics.restockReccomended}</td>
                                 <td className="border border-gray-300 p-2">
-                                    {productHistory.find(history => history.productNo === productNo)?.stock || 0}
+                                    {statistics.stock || 0}
                                 </td>
                                 <td className="border border-gray-300 p-2">
-                                    {showInPacks ? averageMonthlySalesPerPack[productNo].toFixed(2) : averageMonthlySales[productNo].toFixed(2)}
+                                    {showInPacks ? statistics.averageSalesPerPack.toFixed(2) : statistics.averageSales.toFixed(2)}
                                 </td>
-                                {monthIndices.map((monthIndex) => (
-                                    monthIndex < monthIndices.length - 2 ? null :
-                                        <td key={monthIndex} className={`border border-gray-300 p-2 ${includedMonths[productNo].includes(monthIndex) ? "text-green-500" : "text-red-500"}`}>
-                                            {productHistory.find(history => history.productNo === productNo)?.sales[monthIndex] || 0}
-                                        </td>
+                                {lastXMonthIndicesRestock.map((monthIndex) => (
+                                    <td key={monthIndex} className={`border border-gray-300 p-2 ${statistics.includedMonths.includes(monthIndex) ? "text-green-500" : "text-red-500"}`}>
+                                        {statistics.sales[monthIndex] || 0}
+                                    </td>
                                 ))}
                             </tr>
                         ))}

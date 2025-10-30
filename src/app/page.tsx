@@ -8,11 +8,9 @@ import { ProductHistory, ProductInfo } from "./lib/types";
 export default function Home() {
 
   const [productHistory, setproductHistory] = useState<ProductHistory[]>([]);
-  const [months, setMonths] = useState<{ [id: number]: string }>({});
   const [catalogueProducts, setCatalogueProducts] = useState<ProductInfo[]>([]);
 
-  const handleFileContentChange = (lines: ProductHistory[], months: { [id: number]: string }) => {
-    setMonths(months);
+  const handleFileContentChange = (lines: ProductHistory[]) => {
     setproductHistory(lines);
   }
 
@@ -26,7 +24,7 @@ export default function Home() {
       <p className="text-center mt-4">Upload a text file to check product stock.</p>
       <CatalogueFileUploadParser onFileContentChange={handleCatalogueFileContentChange} />
       <TextFileUploadParser onFileContentChange={handleFileContentChange} />
-      <ProductHistoryDisplay productHistory={productHistory} months={months} productInfo={catalogueProducts} />
+      <ProductHistoryDisplay productHistory={productHistory} productInfo={catalogueProducts} />
     </div>
   );
 }
