@@ -7,12 +7,11 @@ const getLastMonthFraction = (currentDay: number) => {
     return currentDay / lastMonth.getDate();
 }
 
-const getMonthRange = (sales: { [monthId: number]: number }): { firstMonth: number, lastMonth: number } => {
+const getFirstMonth = (sales: { [monthId: number]: number }): number => {
     const keys = Object.keys(sales).map(Number);
     const firstMonth: number = Math.min(...keys);
-    const lastMonth: number = Math.max(...keys);
 
-    return { firstMonth, lastMonth };
+    return firstMonth;
 }
 
 // Get the months that are included in calculations
@@ -25,9 +24,10 @@ export const getIncludedMonths = (productHistory: ProductHistory[], monthsforAve
 
         includedMonths[history.productNo] = [];
 
-        const monthRange = getMonthRange(history.sales);
+        const firstMonth = getFirstMonth(history.sales);
+        const lastMonth = getCurrentMonthIndex();
 
-        for (let j = monthRange.lastMonth; j >= monthRange.firstMonth; j--) {
+        for (let j = lastMonth; j >= firstMonth; j--) {
             if (!includeCurrentMonth && j === currentMonth) {
                 continue; // Skip the current month if includeCurrentMonth is false
             }
